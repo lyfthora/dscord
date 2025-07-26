@@ -80,7 +80,7 @@ export default function CreateChannelForm(): JSX.Element {
         {isDM ? (
           <div className="space-y-4">
             <label className="labelTitle" htmlFor="dmUserId">
-              User ID
+              Username
             </label>
             <div className="flex items-center bg-gray-100">
               <input
@@ -89,7 +89,15 @@ export default function CreateChannelForm(): JSX.Element {
                 name="dmUserId"
                 value={dmUserId}
                 onChange={(e) => setDmUserId(e.target.value)}
+                list="users-list"
               />
+              <datalist id="users-list">
+                {users.map((user) => (
+                  <option key={user.id} value={user.name}>
+                    {user.name}
+                  </option>
+                ))}
+              </datalist>
             </div>
           </div>
         ) : (
@@ -233,7 +241,10 @@ export default function CreateChannelForm(): JSX.Element {
 
   function createClicked() {
     if (isDM) {
-      createDirectMessage(client, dmUserId);
+      const selectedUser = users.find((user) => user.name === dmUserId);
+      if (selectedUser) {
+        createDirectMessage(client, selectedUser.id);
+      }
     } else {
       switch (formData.channelType) {
         case "text":
