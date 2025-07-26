@@ -10,22 +10,23 @@ export async function POST(request: Request) {
   console.log("[/api/register-user] Body:", body);
 
   const userId = body?.userId;
-  const mail = body?.email;
+  const username = body?.username;
 
-  if (!userId || !mail) {
+  if (!userId || !username) {
     return Response.error();
   }
 
   const user = await serverClient.upsertUser({
     id: userId,
     role: "user",
-    name: mail,
-    imageUrl: `https://getstream.io/random_png/?id=${userId}&name=${mail}`,
+    name: username,
+    imageUrl: `https://getstream.io/random_png/?id=${userId}&name=${username}`,
   });
 
   const params = {
     publicMetadata: {
       streamRegistered: true,
+      username: username,
     },
   };
   const updatedUser = await clerkClient.users.updateUser(userId, params);
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
   console.log("[/api/register-user] User:", updatedUser);
   const response = {
     userId: userId,
-    userName: mail,
+    userName: username,
   };
 
   return Response.json(response);
