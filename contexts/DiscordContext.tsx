@@ -69,22 +69,31 @@ export const DiscordContextProvider = ({
 
   const changeServer = useCallback(
     async (server: DiscordServer | undefined, client: StreamChat) => {
+      // Define filtros básicos
       let filters: ChannelFilters = {
         type: "messaging",
         members: { $in: [client.userID as string] },
       };
 
       if (!server) {
-        filters.member_count = 2;
+        // Filtramos solo canales con exactamente 2 miembros para DMs
+        filters = {
+          type: "messaging",
+          member_count: 2,
+          members: { $in: [client.userID as string] },
+        };
       }
 
       const channels = await client.queryChannels(filters);
+      console.log(channels);
+
       const channelsByCategories = new Map<
         string,
         Array<Channel<DefaultStreamChatGenerics>>
       >();
 
       if (server) {
+        // Filtra canales que pertenecen al servidor seleccionado y agrupa por categorías
         const categories = new Set(
           channels
             .filter(
@@ -106,12 +115,30 @@ export const DiscordContextProvider = ({
           );
         }
       } else {
-        channelsByCategories.set("Direct Messages", channels);
+        // Aquí filtramos para que solo queden DMs reales, que no tengan server ni category
+        const dmChannels = channels.filter((channel) => {
+          const data = channel.data?.data as ChannelData | undefined;
+          return !data?.server && !data?.category;
+        });
+
+        // Cambiamos el nombre para mostrar el nombre del otro usuario en el DM
+        const renamedDMs = dmChannels.map((channel) => {
+          const otherUser = Object.values(channel.state.members).find(
+            (member) => member.user?.id !== client.userID
+          );
+          channel.data = {
+            ...channel.data,
+            name: otherUser?.user?.name || "Unknown User",
+          };
+          return channel;
+        });
+
+        channelsByCategories.set("Direct Messages", renamedDMs);
       }
 
       setMyState((prev) => ({ ...prev, server, channelsByCategories }));
     },
-    []
+    [setMyState]
   );
 
   const createDirectMessage = useCallback(
@@ -119,31 +146,23 @@ export const DiscordContextProvider = ({
       const userIds = [client.userID, otherUserId].filter(
         (id): id is string => typeof id === "string"
       );
-      console.log("Client userID:", client.userID);
+
       if (userIds.length !== 2) {
         throw new Error("Missing user IDs for direct message");
       }
 
-      const existing = await client.queryChannels({
-        type: "messaging",
-        member_count: 2,
-        members: { $eq: userIds },
+      let channel = client.channel("messaging", {
+        members: userIds,
       });
-      console.log("Existing channels:", existing);
-      let channel: Channel;
 
-      if (existing.length > 0) {
-        channel = existing[0];
-      } else {
-        channel = client.channel("messaging", {
-          members: userIds,
-        });
-        await channel.create();
-      }
+      await channel.create();
+
+      // Actualiza la lista de canales para que aparezca el nuevo DM
+      changeServer(undefined, client);
 
       return channel;
     },
-    []
+    [changeServer]
   );
 
   const createCall = useCallback(
@@ -250,13 +269,13 @@ export const DiscordContextProvider = ({
   const store: DiscordState = {
     server: myState.server,
     callId: myState.callId,
-    createDirectMessage,
     channelsByCategories: myState.channelsByCategories,
-    changeServer,
-    createServer,
-    createChannel,
-    createCall,
-    setCall,
+    changeServer: changeServer,
+    createServer: createServer,
+    createDirectMessage: createDirectMessage,
+    createChannel: createChannel,
+    createCall: createCall,
+    setCall: setCall,
   };
 
   return (
