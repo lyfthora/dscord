@@ -1,17 +1,32 @@
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Gear, LeaveServer, Mic, Speaker } from '../Icons';
 import { useChatContext } from 'stream-chat-react';
 import { useClerk } from '@clerk/nextjs';
 import ChannelListMenuRow from '../TopBar/ChannelListMenuRow';
+import UpdateUsernameForm from '@/components/UpdateUsernameForm/UpdateUsernameForm';
 
 export default function ChannelListBottomBar(): JSX.Element {
   const { client } = useChatContext();
   const [micActive, setMicActive] = useState(false);
   const [audioActive, setAudioActive] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const { signOut } = useClerk();
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuRef]);
 
   return (
     <div className='mt-auto p-2 bg-light-gray w-full flex items-center space-x-3 relative'>
@@ -61,17 +76,23 @@ export default function ChannelListBottomBar(): JSX.Element {
         <Gear className='w-full h-full' />
       </button>
       {menuOpen && (
-        <button
-          className='absolute -top-12 -left-1 w-52 p-2 bg-white rounded-md shadow-md'
-          onClick={() => signOut()}
+        <div
+          ref={menuRef}
+          className='absolute bottom-full mb-2 -left-1 w-52 p-2 bg-white rounded-md shadow-md'
         >
-          <ChannelListMenuRow
-            name='Sign out'
-            icon={<LeaveServer />}
-            bottomBorder={false}
-            red
-          />
-        </button>
+          <UpdateUsernameForm />
+          <button
+            className='w-full'
+            onClick={() => signOut()}
+          >
+            <ChannelListMenuRow
+              name='Sign out'
+              icon={<LeaveServer />}
+              bottomBorder={false}
+              red
+            />
+          </button>
+        </div>
       )}
     </div>
   );
