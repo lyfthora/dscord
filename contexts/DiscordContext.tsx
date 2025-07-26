@@ -6,16 +6,22 @@ import { createContext, useCallback, useContext, useState } from "react";
 import { Channel, ChannelFilters, StreamChat } from "stream-chat";
 import { DefaultStreamChatGenerics } from "stream-chat-react";
 import { v4 as uuid } from "uuid";
+
 type ChannelData = {
   server?: string;
   category?: string;
   image?: string;
 };
+
 type DiscordState = {
   server?: DiscordServer;
   callId: string | undefined;
   channelsByCategories: Map<string, Array<Channel<DefaultStreamChatGenerics>>>;
   changeServer: (server: DiscordServer | undefined, client: StreamChat) => void;
+  createDirectMessage: (
+    client: StreamChat,
+    otherUserId: string
+  ) => Promise<Channel>;
   createServer: (
     client: StreamChat,
     videoClient: StreamVideoClient,
@@ -47,11 +53,14 @@ const initialValue: DiscordState = {
   createChannel: () => {},
   createCall: async () => {},
   setCall: () => {},
+  createDirectMessage: async () => {
+    throw new Error("createDirectMessage not implemented");
+  },
 };
 
 const DiscordContext = createContext<DiscordState>(initialValue);
 
-export const DiscordContextProvider: any = ({
+export const DiscordContextProvider = ({
   children,
 }: {
   children: React.ReactNode;
@@ -64,50 +73,77 @@ export const DiscordContextProvider: any = ({
         type: "messaging",
         members: { $in: [client.userID as string] },
       };
+
       if (!server) {
         filters.member_count = 2;
       }
 
-      console.log(
-        "[DiscordContext - loadServerList] Querying channels for ",
-        client.userID
-      );
       const channels = await client.queryChannels(filters);
       const channelsByCategories = new Map<
         string,
         Array<Channel<DefaultStreamChatGenerics>>
       >();
+
       if (server) {
         const categories = new Set(
           channels
-            .filter((channel) => {
-              const data = channel.data?.data as ChannelData;
-              return data.server === server.name;
-            })
-            .map((channel) => {
-              const data = channel.data?.data as ChannelData;
-              return data.category;
-            })
+            .filter(
+              (channel) =>
+                (channel.data?.data as ChannelData)?.server === server.name
+            )
+            .map((channel) => (channel.data?.data as ChannelData)?.category)
         );
 
-        for (const category of Array.from(categories)) {
-          const key = category ?? "Uncategorized"; // Valor por defecto si es undefined
+        for (const category of categories) {
+          const key = category ?? "Uncategorized";
           channelsByCategories.set(
             key,
-            channels.filter((channel) => {
-              const data = channel.data?.data as ChannelData;
-              return data.server === server.name && data.category === category;
-            })
+            channels.filter(
+              (channel) =>
+                (channel.data?.data as ChannelData)?.server === server.name &&
+                (channel.data?.data as ChannelData)?.category === category
+            )
           );
         }
       } else {
         channelsByCategories.set("Direct Messages", channels);
       }
-      setMyState((myState) => {
-        return { ...myState, server, channelsByCategories };
-      });
+
+      setMyState((prev) => ({ ...prev, server, channelsByCategories }));
     },
-    [setMyState]
+    []
+  );
+
+  const createDirectMessage = useCallback(
+    async (client: StreamChat, otherUserId: string) => {
+      const userIds = [client.userID, otherUserId].filter(
+        (id): id is string => typeof id === "string"
+      );
+      console.log("Client userID:", client.userID);
+      if (userIds.length !== 2) {
+        throw new Error("Missing user IDs for direct message");
+      }
+
+      const existing = await client.queryChannels({
+        type: "messaging",
+        member_count: 2,
+        members: { $eq: userIds },
+      });
+      console.log("Existing channels:", existing);
+      let channel: Channel;
+
+      if (existing.length > 0) {
+        channel = existing[0];
+      } else {
+        channel = client.channel("messaging", {
+          members: userIds,
+        });
+        await channel.create();
+      }
+
+      return channel;
+    },
+    []
   );
 
   const createCall = useCallback(
@@ -119,27 +155,24 @@ export const DiscordContextProvider: any = ({
     ) => {
       const callId = uuid();
       const audioCall = client.call("default", callId);
-      const audioChannelMembers: MemberRequest[] = userIds.map((userId) => {
-        return {
-          user_id: userId,
-        };
-      });
+      const members: MemberRequest[] = userIds.map((user_id) => ({ user_id }));
+
       try {
         const createdAudioCall = await audioCall.create({
           data: {
             custom: {
-              // serverId: server?.id,
-              serverName: server?.name,
+              serverName: server.name,
               callName: channelName,
             },
-            members: audioChannelMembers,
+            members,
           },
         });
+
         console.log(
           `[DiscordContext] Created Call with id: ${createdAudioCall.call.id}`
         );
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     },
     []
@@ -164,8 +197,8 @@ export const DiscordContextProvider: any = ({
       });
 
       try {
-        const response = await messagingChannel.create();
-        console.log("[DiscordContext - createServer] Response: ", response);
+        await messagingChannel.create();
+
         if (myState.server) {
           await createCall(
             videoClient,
@@ -174,6 +207,7 @@ export const DiscordContextProvider: any = ({
             userIds
           );
         }
+
         changeServer({ name, image: imageUrl }, client);
       } catch (err) {
         console.error(err);
@@ -191,41 +225,38 @@ export const DiscordContextProvider: any = ({
     ) => {
       if (client.userID) {
         const channel = client.channel("messaging", {
-          name: name,
+          name,
           members: userIds,
           data: {
             server: myState.server?.name,
-            category: category,
+            category,
           },
         });
+
         try {
-          const response = await channel.create();
+          await channel.create();
         } catch (err) {
-          console.log(err);
+          console.error(err);
         }
       }
     },
     [myState.server?.name]
   );
 
-  const setCall = useCallback(
-    (callId: string | undefined) => {
-      setMyState((myState) => {
-        return { ...myState, callId };
-      });
-    },
-    [setMyState]
-  );
+  const setCall = useCallback((callId: string | undefined) => {
+    setMyState((prev) => ({ ...prev, callId }));
+  }, []);
 
   const store: DiscordState = {
     server: myState.server,
     callId: myState.callId,
+    createDirectMessage,
     channelsByCategories: myState.channelsByCategories,
-    changeServer: changeServer,
-    createServer: createServer,
-    createChannel: createChannel,
-    createCall: createCall,
-    setCall: setCall,
+    changeServer,
+    createServer,
+    createChannel,
+    createCall,
+    setCall,
   };
 
   return (
