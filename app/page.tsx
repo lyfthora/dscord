@@ -6,6 +6,7 @@ import { LoadingIndicator } from "stream-chat-react";
 import { useClerk } from "@clerk/nextjs";
 import { useCallback, useEffect, useState } from "react";
 import MyChat from "@/components/MyChat";
+import { useRouter } from 'next/navigation';
 
 // const userId = '7cd445eb-9af2-4505-80a9-aa8543c3343f';
 // const userName = 'Harry Potter';
@@ -29,6 +30,7 @@ export default function Home() {
   const [myState, setMyState] = useState<Homestate | undefined>(undefined);
 
   const { user: myUser } = useClerk();
+  const router = useRouter();
 
   const registerUser = useCallback(
     async function registerUser() {
@@ -45,6 +47,7 @@ export default function Home() {
           body: JSON.stringify({
             userId: userId,
             email: mail,
+            username: myUser.publicMetadata.username
           }),
         });
         const responseBody = await streamResponse.json();
@@ -61,12 +64,16 @@ export default function Home() {
       myUser?.primaryEmailAddress?.emailAddress &&
       !myUser?.publicMetadata.streamRegistered
     ) {
+      if (!myUser?.publicMetadata.username) {
+        router.push("/register");
+        return;
+      }
       console.log("[Page - useEffect] Registering user on Stream backend");
       registerUser().then((result) => {
         console.log("[Page - useEffect] Result: ", result);
         getUserToken(
           myUser.id,
-          myUser?.primaryEmailAddress?.emailAddress || "Unknown"
+          myUser?.publicMetadata.username as string || "Unknown"
         );
       });
     } else {
@@ -78,11 +85,11 @@ export default function Home() {
         );
         getUserToken(
           myUser?.id || "Unknown",
-          myUser?.primaryEmailAddress?.emailAddress || "Unknown"
+          myUser?.publicMetadata.username as string || "Unknown"
         );
       }
     }
-  }, [registerUser, myUser]);
+  }, [registerUser, myUser, router]);
 
   if (!myState) {
     return <LoadingIndicator />;
