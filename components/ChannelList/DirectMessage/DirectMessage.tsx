@@ -38,7 +38,7 @@ const CreateDirectMessage = () => {
     <div className="p-4">
       <input
         type="text"
-        placeholder="Nombre de usuario"
+        placeholder="Username"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
         className="border rounded px-2 py-1 w-full"
@@ -47,7 +47,7 @@ const CreateDirectMessage = () => {
         onClick={handleCreateDM}
         className="mt-2 bg-blue-600 text-white px-3 py-1 rounded"
       >
-        Crear mensaje directo
+        Create Direct Message
       </button>
     </div>
   );
