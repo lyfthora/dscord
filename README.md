@@ -31,12 +31,14 @@ Un clon de Discord construido con Next.js, Stream Chat y Clerk para autenticaci√
 ### Instalaci√≥n
 
 1. Clona el repositorio:
+
    ```bash
    git clone https://github.com/tu-usuario/discord-clone.git
    cd discord-clone
    ```
 
 2. Instala las dependencias:
+
    ```bash
    npm install
    # o
@@ -44,9 +46,11 @@ Un clon de Discord construido con Next.js, Stream Chat y Clerk para autenticaci√
    ```
 
 3. Configura las variables de entorno:
+
    ```bash
    cp .env.local.example .env.local
    ```
+
    Edita el archivo `.env.local` y a√±ade tus credenciales de Clerk, Stream Chat y Supabase.
 
 4. Configura Supabase para el almacenamiento de im√°genes:
