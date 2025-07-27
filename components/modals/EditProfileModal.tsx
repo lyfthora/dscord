@@ -2,6 +2,7 @@
 
 import { useUser } from '@clerk/nextjs';
 import { useState } from 'react';
+import { useSupabaseUpload } from '@/hooks/useSupabaseUpload';
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -10,16 +11,39 @@ interface EditProfileModalProps {
 
 export default function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
   const { user } = useUser();
+  const { uploadFile, isUploading } = useSupabaseUpload();
   const [username, setUsername] = useState(user?.publicMetadata.username as string || '');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    
+    setUploadError(null);
+    let avatarUrl = user.imageUrl;
 
-    // NOTE: In a real app, you'd upload the avatarFile to a service like S3
-    // and get a URL back. For this example, we'll just simulate it.
-    const avatarUrl = avatarFile ? URL.createObjectURL(avatarFile) : user.imageUrl;
+    // Upload avatar file to Supabase if a new file was selected
+    if (avatarFile) {
+      const { url, error } = await uploadFile(avatarFile, 'avatars', 'profiles');
+      
+      if (error) {
+        // Check if it's an RLS policy error
+        if (error.message && error.message.includes('row-level security policy')) {
+          setUploadError(
+            'Error de permisos en Supabase: ' + error.message + 
+            '\n\nPor favor, consulta el archivo SUPABASE_SETUP.md para instrucciones sobre cómo configurar las políticas de seguridad.'
+          );
+        } else {
+          setUploadError('Error al subir la imagen: ' + error.message);
+        }
+        return;
+      }
+      
+      if (url) {
+        avatarUrl = url;
+      }
+    }
 
     const res = await fetch('/api/update-profile', {
       method: 'POST',
@@ -34,7 +58,10 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
     });
 
     if (res.ok) {
+      await user.reload();
       onClose();
+    } else {
+      setUploadError('Error updating profile');
     }
   };
 
@@ -70,12 +97,21 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100"
             />
           </div>
+          {uploadError && (
+            <div className="mb-4 p-2 bg-red-100 text-red-700 rounded-md">
+              {uploadError}
+            </div>
+          )}
           <div className="flex justify-end space-x-2">
             <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md">
               Cancel
             </button>
-            <button type="submit" className="px-4 py-2 text-white bg-indigo-600 rounded-md">
-              Save
+            <button 
+              type="submit" 
+              disabled={isUploading}
+              className={`px-4 py-2 text-white bg-indigo-600 rounded-md ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {isUploading ? 'Uploading...' : 'Save'}
             </button>
           </div>
         </form>
