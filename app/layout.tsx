@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { DiscordContextProvider } from '@/contexts/DiscordContext';
 import { ClerkProvider } from '@clerk/nextjs';
+import SupabaseProvider from '@/components/providers/SupabaseProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -19,9 +20,11 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang='en'>
-        <DiscordContextProvider>
-          <body className={inter.className}>{children}</body>
-        </DiscordContextProvider>
+        <SupabaseProvider>
+          <DiscordContextProvider>
+            <body className={inter.className}>{children}</body>
+          </DiscordContextProvider>
+        </SupabaseProvider>
       </html>
     </ClerkProvider>
   );
