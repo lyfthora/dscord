@@ -4,13 +4,14 @@ import { Gear, LeaveServer, Mic, Speaker } from '../Icons';
 import { useChatContext } from 'stream-chat-react';
 import { useClerk } from '@clerk/nextjs';
 import ChannelListMenuRow from '../TopBar/ChannelListMenuRow';
-import UpdateUsernameForm from '@/components/UpdateUsernameForm/UpdateUsernameForm';
+import EditProfileModal from '@/components/modals/EditProfileModal';
 
 export default function ChannelListBottomBar(): JSX.Element {
   const { client } = useChatContext();
   const [micActive, setMicActive] = useState(false);
   const [audioActive, setAudioActive] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const { signOut } = useClerk();
@@ -80,7 +81,13 @@ export default function ChannelListBottomBar(): JSX.Element {
           ref={menuRef}
           className='absolute bottom-full mb-2 -left-1 w-52 p-2 bg-white rounded-md shadow-md'
         >
-          <UpdateUsernameForm />
+          <button onClick={() => { setIsModalOpen(true); setMenuOpen(false); }} className="w-full">
+            <ChannelListMenuRow
+              name="Edit Profile"
+              icon={<Gear />}
+              bottomBorder={true}
+            />
+          </button>
           <button
             className='w-full'
             onClick={() => signOut()}
@@ -94,6 +101,7 @@ export default function ChannelListBottomBar(): JSX.Element {
           </button>
         </div>
       )}
+      <EditProfileModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 }
