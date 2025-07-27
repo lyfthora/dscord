@@ -7,10 +7,11 @@ export async function POST(request: Request) {
     process.env.STREAM_CHAT_SECRET
   );
   const body = await request.json();
-  console.log("[/api/update-username] Body:", body);
+  console.log("[/api/update-profile] Body:", body);
 
   const userId = body?.userId;
   const username = body?.username;
+  const avatarUrl = body?.avatarUrl;
 
   if (!userId || !username) {
     return Response.error();
@@ -20,19 +21,22 @@ export async function POST(request: Request) {
     id: userId,
     role: "user",
     name: username,
+    imageUrl: avatarUrl,
   });
 
   const params = {
     publicMetadata: {
       username: username,
+      imageUrl: avatarUrl,
     },
   };
   const updatedUser = await clerkClient.users.updateUser(userId, params);
 
-  console.log("[/api/update-username] User:", updatedUser);
+  console.log("[/api/update-profile] User:", updatedUser);
   const response = {
     userId: userId,
     userName: username,
+    avatarUrl: avatarUrl,
   };
 
   return Response.json(response);
