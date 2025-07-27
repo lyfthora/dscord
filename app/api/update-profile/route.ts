@@ -1,5 +1,7 @@
 import { clerkClient } from "@clerk/nextjs";
 import { StreamChat } from "stream-chat";
+import { cookies } from "next/headers";
+import { createClient } from "@/utils/supabase/server";
 
 export async function POST(request: Request) {
   const serverClient = StreamChat.getInstance(
@@ -8,6 +10,9 @@ export async function POST(request: Request) {
   );
   const body = await request.json();
   console.log("[/api/update-profile] Body:", body);
+
+  // Inicializar el cliente de Supabase
+  const supabase = createClient(cookies());
 
   const userId = body?.userId;
   const username = body?.username;
@@ -21,6 +26,7 @@ export async function POST(request: Request) {
     id: userId,
     role: "user",
     name: username,
+    image: avatarUrl, // Add this line
     imageUrl: avatarUrl,
   });
 
