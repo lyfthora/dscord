@@ -1,6 +1,7 @@
 import { authMiddleware, clerkClient, redirectToSignIn } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
 import { NextResponse } from 'next/server';
+import { createClient } from '@/utils/supabase/middleware';
 
 // See https://clerk.com/docs/references/nextjs/auth-middleware
 // for more information about configuring your Middleware
@@ -28,7 +29,10 @@ export default authMiddleware({
       );
     }
 
-    return NextResponse.next();
+    // Integrar el middleware de Supabase
+    const supabaseResponse = createClient(request);
+    
+    return supabaseResponse;
   },
 });
 
