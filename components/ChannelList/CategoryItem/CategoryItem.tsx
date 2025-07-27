@@ -37,12 +37,14 @@ export default function CategoryItem({
             {category}
           </span>
         </button>
-        <Link
-          className='inline-block create-button'
-          href={`/?createChannel=true&serverName=${serverName}&category=${category}`}
-        >
-          <PlusIcon />
-        </Link>
+        {category !== "Direct Messages" && (
+          <Link
+            className='inline-block create-button'
+            href={`/?createChannel=true&serverName=${serverName}&category=${category}`}
+          >
+            <PlusIcon />
+          </Link>
+        )}
       </div>
       {isOpen && (
         <div>
