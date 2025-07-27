@@ -1,46 +1,19 @@
-import {
-  Bell,
-  Boost,
-  FaceSmile,
-  FolderPlus,
-  Gear,
-  LeaveServer,
-  Pen,
-  PersonAdd,
-  PlusCircle,
-  Shield,
-  SpeakerMuted,
-} from '../Icons';
+import { Icons } from '../Icons';
 
-export type ListRowElement = {
-  name: string;
-  icon: JSX.Element;
-  bottomBorder?: boolean;
-  purple?: boolean;
-  red?: boolean;
-  reverseOrder?: boolean;
-};
-
-export const menuItems: ListRowElement[] = [
-  { name: 'Server Boost', icon: <Boost />, bottomBorder: true },
+export const menuItems = [
   {
-    name: 'Invite People',
-    icon: <PersonAdd />,
-    bottomBorder: false,
-    purple: true,
+    label: 'Create Channel',
+    icon: Icons.Call,
+    onClick: () => console.log('Create Channel'),
   },
-  { name: 'Server Settings', icon: <Gear />, bottomBorder: false },
-  { name: 'Create Channel', icon: <PlusCircle />, bottomBorder: false },
-  { name: 'Create Category', icon: <FolderPlus />, bottomBorder: false },
-  { name: 'App Directory', icon: <FaceSmile />, bottomBorder: true },
-  { name: 'Notification Settings', icon: <Bell />, bottomBorder: false },
-  { name: 'Privacy Settings', icon: <Shield />, bottomBorder: true },
-  { name: 'Edit Server Profile', icon: <Pen />, bottomBorder: false },
-  { name: 'Hide Muted Channels', icon: <SpeakerMuted />, bottomBorder: true },
   {
-    name: 'Leave Server',
-    icon: <LeaveServer />,
-    bottomBorder: false,
-    red: true,
+    label: 'Server Settings',
+    icon: Icons.Setting2,
+    onClick: () => console.log('Server Settings'),
+  },
+  {
+    label: 'Leave Server',
+    icon: Icons.CallRemove,
+    onClick: () => console.log('Leave Server'),
   },
 ];
