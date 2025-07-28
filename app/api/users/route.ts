@@ -3,7 +3,7 @@ import { StreamChat } from "stream-chat";
 
 export async function GET() {
   const serverClient = StreamChat.getInstance(
-    "jewc2e8wxrtk",
+    process.env.STREAM_API_KEY as string,
     process.env.STREAM_CHAT_SECRET
   );
   const response = await serverClient.queryUsers({});
