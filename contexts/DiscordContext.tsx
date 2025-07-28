@@ -254,12 +254,13 @@ export const DiscordContextProvider = ({
 
         try {
           await channel.create();
+          changeServer(myState.server, client);
         } catch (err) {
           console.error(err);
         }
       }
     },
-    [myState.server?.name]
+    [myState.server?.name, myState.server, changeServer]
   );
 
   const setCall = useCallback((callId: string | undefined) => {
