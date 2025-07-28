@@ -6,7 +6,7 @@ import { LoadingIndicator } from "stream-chat-react";
 import { useClerk } from "@clerk/nextjs";
 import { useCallback, useEffect, useState } from "react";
 import MyChat from "@/components/MyChat";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
 // const userId = '7cd445eb-9af2-4505-80a9-aa8543c3343f';
 // const userName = 'Harry Potter';
@@ -47,7 +47,7 @@ export default function Home() {
           body: JSON.stringify({
             userId: userId,
             email: mail,
-            username: myUser.publicMetadata.username
+            username: myUser.publicMetadata.username,
           }),
         });
         const responseBody = await streamResponse.json();
@@ -73,7 +73,7 @@ export default function Home() {
         console.log("[Page - useEffect] Result: ", result);
         getUserToken(
           myUser.id,
-          myUser?.publicMetadata.username as string || "Unknown"
+          (myUser?.publicMetadata.username as string) || "Unknown"
         );
       });
     } else {
@@ -85,7 +85,7 @@ export default function Home() {
         );
         getUserToken(
           myUser?.id || "Unknown",
-          myUser?.publicMetadata.username as string || "Unknown"
+          (myUser?.publicMetadata.username as string) || "Unknown"
         );
       }
     }
@@ -118,7 +118,7 @@ export default function Home() {
     const user: User = {
       id: userId,
       name: userName,
-      image: `https://getstream.io/random_png/?id=${userId}&name=${userName}`,
+      image: myUser?.publicMetadata?.imageUrl as string,
     };
     setMyState({
       apiKey: apiKey,
