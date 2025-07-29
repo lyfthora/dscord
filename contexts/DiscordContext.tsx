@@ -145,13 +145,16 @@ export const DiscordContextProvider = ({
     async (client: StreamChat, otherUserId: string) => {
       const userIds = [client.userID, otherUserId].filter(
         (id): id is string => typeof id === "string"
-      );
+      ).sort();
 
       if (userIds.length !== 2) {
         throw new Error("Missing user IDs for direct message");
       }
 
-      let channel = client.channel("messaging", {
+      // Tomar una parte de los IDs de usuario para mantener el ID del canal corto
+      const channelId = `dm-${userIds[0].substring(0, 20)}-${userIds[1].substring(0, 20)}`;
+
+      let channel = client.channel("messaging", channelId, {
         members: userIds,
       });
 
