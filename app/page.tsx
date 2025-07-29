@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 // const userId = '7cd445eb-9af2-4505-80a9-aa8543c3343f';
 // const userName = 'Harry Potter';
 
-const apiKey = "jewc2e8wxrtk";
+const apiKey = "uhwg6b8knc65";
 // const userToken =
 //   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiN2NkNDQ1ZWItOWFmMi00NTA1LTgwYTktYWE4NTQzYzMzNDNmIn0.TtrCA5VoRB2KofI3O6lYjYZd2pHdQT408u7ryeWO4Qg';
 
