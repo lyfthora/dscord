@@ -40,9 +40,7 @@ const ServerList = () => {
     );
     const serverArray = Array.from(serverSet.values());
     setServerList(serverArray);
-    if (serverArray.length > 0) {
-      changeServer(serverArray[0], client);
-    }
+    changeServer(undefined, client);
   }, [client, changeServer]);
 
   useEffect(() => {
