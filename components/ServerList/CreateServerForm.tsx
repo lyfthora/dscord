@@ -8,6 +8,7 @@ import { useChatContext } from 'stream-chat-react';
 import { useStreamVideoClient } from '@stream-io/video-react-sdk';
 import { CloseMark } from '../ChannelList/Icons';
 import UserRow from '../ChannelList/CreateChannelForm/UserRow';
+import { useSupabaseUpload } from '@/hooks/useSupabaseUpload';
 
 type FormState = {
   serverName: string;
@@ -26,6 +27,8 @@ const CreateServerForm = () => {
   const { client } = useChatContext();
   const videoClient = useStreamVideoClient();
   const { createServer } = useDiscordContext();
+  const { uploadFile, isUploading } = useSupabaseUpload();
+
   const initialState: FormState = {
     serverName: '',
     serverImage: '',
@@ -63,6 +66,19 @@ const CreateServerForm = () => {
     loadUsers();
   }, [loadUsers]);
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const { url, error } = await uploadFile(file, 'servers', 'servers');
+      if (error) {
+        console.error('Error uploading server image:', error);
+        // Optionally, show an error message to the user
+      } else if (url) {
+        setFormData({ ...formData, serverImage: url });
+      }
+    }
+  };
+
   return (
     <dialog className='absolute z-10 space-y-2 rounded-xl' ref={dialogRef}>
       <div className='w-full flex items-center justify-between py-8 px-6'>
@@ -91,20 +107,21 @@ const CreateServerForm = () => {
           />
         </div>
         <label className='labelTitle' htmlFor='serverImage'>
-          Image URL
+          Server Image
         </label>
         <div className='flex items-center bg-gray-100'>
-          <span className='text-2xl p-2 text-gray-500'>#</span>
           <input
-            type='text'
+            type='file'
             id='serverImage'
             name='serverImage'
-            value={formData.serverImage}
-            onChange={(e) =>
-              setFormData({ ...formData, serverImage: e.target.value })
-            }
-            required
+            onChange={handleFileChange}
+            accept='image/*'
+            disabled={isUploading}
           />
+          {isUploading && <p>Uploading...</p>}
+          {formData.serverImage && !isUploading && (
+            <p className='text-sm text-gray-500'>Image selected</p>
+          )}
         </div>
         <h2 className='mb-2 labelTitle'>Add Users</h2>
         <div className='max-h-64 overflow-y-scroll'>
@@ -119,9 +136,9 @@ const CreateServerForm = () => {
         </Link>
         <button
           type='submit'
-          disabled={buttonDisabled()}
+          disabled={buttonDisabled() || isUploading}
           className={`bg-discord rounded py-2 px-4 text-white font-bold uppercase ${
-            buttonDisabled() ? 'opacity-50 cursor-not-allowed' : ''
+            (buttonDisabled() || isUploading) ? 'opacity-50 cursor-not-allowed' : ''
           }`}
           onClick={createClicked}
         >
