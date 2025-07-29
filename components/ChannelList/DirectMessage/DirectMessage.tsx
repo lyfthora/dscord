@@ -20,9 +20,13 @@ const CreateDirectMessage = () => {
 
       const targetUser = response.users[0];
 
-      // ⚠️ Usar un ID único para forzar la creación
-      const channel = client.channel("messaging", uuidv4(), {
-        members: [client.userID!, targetUser.id],
+      // Generar un ID de canal determinista para DMs
+      const members = [client.userID!, targetUser.id].sort();
+      // Tomar una parte de los IDs de usuario para mantener el ID del canal corto
+      const channelId = `dm-${members[0].substring(0, 20)}-${members[1].substring(0, 20)}`;
+
+      const channel = client.channel("messaging", channelId, {
+        members: members,
       });
 
       await channel.create();
