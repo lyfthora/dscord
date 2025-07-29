@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { StreamChat } from "stream-chat";
+import { supabase } from "@/lib/supabase";
 
 // Función para inicializar el cliente de Stream en el servidor
 const getStreamClient = () => {
@@ -41,8 +42,24 @@ export async function POST(req: NextRequest) {
     // 2. Extraer los IDs de los canales (cids)
     const channelIds = channels.map((channel) => channel.cid);
 
+    // Obtener la URL de la imagen del servidor de uno de los canales
+    const imageUrl = channels[0].data?.image as string;
+
     // 3. Borrar los canales de forma permanente
     await client.deleteChannels(channelIds, { hard_delete: true });
+
+    // 4. Borrar la imagen del servidor de Supabase Storage
+    if (imageUrl) {
+      const { data, error } = await supabase.storage
+        .from("servers") // Asegúrate de que este es el nombre correcto de tu bucket
+        .remove([imageUrl.split("/").pop() as string]); // Extrae el nombre del archivo de la URL
+
+      if (error) {
+        console.error("Error deleting image from Supabase:", error);
+      } else {
+        console.log("Image deleted from Supabase:", data);
+      }
+    }
 
     return NextResponse.json({
       message: `Successfully deleted ${channels.length} channels and their messages.`,
