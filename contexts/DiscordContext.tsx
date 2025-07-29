@@ -11,6 +11,7 @@ type ChannelData = {
   server?: string;
   category?: string;
   image?: string;
+  isDM?: boolean;
 };
 
 type DiscordState = {
@@ -108,7 +109,14 @@ export const DiscordContextProvider = ({
         // Filtramos canales que son DMs (exactamente 2 miembros y ambos son los usuarios involucrados)
         const dmChannels = channels.filter((channel) => {
           const members = Object.keys(channel.state.members);
-          return members.length === 2 && members.includes(client.userID as string);
+          return (
+            members.length === 2 &&
+            members.includes(client.userID as string) &&
+            (
+              (channel.data?.data as ChannelData)?.isDM === true ||
+              !(channel.data?.data as ChannelData)?.server
+            )
+          );
         });
 
         const renamedDMs = dmChannels.map((channel) => {
@@ -145,6 +153,9 @@ export const DiscordContextProvider = ({
 
       let channel = client.channel("messaging", channelId, {
         members: userIds,
+        data: {
+          isDM: true,
+        },
       });
 
       await channel.create();
