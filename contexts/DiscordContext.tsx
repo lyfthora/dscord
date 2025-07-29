@@ -75,17 +75,7 @@ export const DiscordContextProvider = ({
         members: { $in: [client.userID as string] },
       };
 
-      if (!server) {
-        // Filtramos solo canales con exactamente 2 miembros para DMs
-        filters = {
-          type: "messaging",
-          member_count: 2,
-          members: { $in: [client.userID as string] },
-        };
-      }
-
       const channels = await client.queryChannels(filters);
-      console.log(channels);
 
       const channelsByCategories = new Map<
         string,
@@ -115,13 +105,12 @@ export const DiscordContextProvider = ({
           );
         }
       } else {
-        // Aquí filtramos para que solo queden DMs reales, que no tengan server ni category
+        // Filtramos canales que son DMs (exactamente 2 miembros y ambos son los usuarios involucrados)
         const dmChannels = channels.filter((channel) => {
-          const data = channel.data?.data as ChannelData | undefined;
-          return !data?.server && !data?.category;
+          const members = Object.keys(channel.state.members);
+          return members.length === 2 && members.includes(client.userID as string);
         });
 
-        // Cambiamos el nombre para mostrar el nombre del otro usuario en el DM
         const renamedDMs = dmChannels.map((channel) => {
           const otherUser = Object.values(channel.state.members).find(
             (member) => member.user?.id !== client.userID
