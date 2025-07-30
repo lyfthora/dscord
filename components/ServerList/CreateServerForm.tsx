@@ -66,16 +66,11 @@ const CreateServerForm = () => {
     loadUsers();
   }, [loadUsers]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      const { url, error } = await uploadFile(file, 'servers', 'servers');
-      if (error) {
-        console.error('Error uploading server image:', error);
-        // Optionally, show an error message to the user
-      } else if (url) {
-        setFormData({ ...formData, serverImage: url });
-      }
+      setImageFile(e.target.files[0]);
     }
   };
 
@@ -151,7 +146,7 @@ const CreateServerForm = () => {
   function buttonDisabled(): boolean {
     return (
       !formData.serverName ||
-      !formData.serverImage ||
+      !imageFile ||
       formData.users.length <= 1
     );
   }
@@ -171,15 +166,15 @@ const CreateServerForm = () => {
   }
 
   function createClicked() {
-    if (!videoClient) {
-      console.log('[CreateServerForm] Video client not available');
+    if (!videoClient || !imageFile) {
+      console.log('[CreateServerForm] Video client or image file not available');
       return;
     }
     createServer(
       client,
       videoClient,
       formData.serverName,
-      formData.serverImage,
+      imageFile,
       formData.users.map((user) => user.id)
     );
     setFormData(initialState);

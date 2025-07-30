@@ -1,8 +1,15 @@
 "use client";
 
 import { DiscordServer } from "@/app/page";
+import { supabase } from "@/lib/supabase";
 import { MemberRequest, StreamVideoClient } from "@stream-io/video-client";
-import { createContext, useCallback, useContext, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { Channel, ChannelFilters, StreamChat } from "stream-chat";
 import { DefaultStreamChatGenerics } from "stream-chat-react";
 import { v4 as uuid } from "uuid";
@@ -27,7 +34,7 @@ type DiscordState = {
     client: StreamChat,
     videoClient: StreamVideoClient,
     name: string,
-    imageUrl: string,
+    imageFile: File,
     userIds: string[]
   ) => void;
   createChannel: (
@@ -59,6 +66,8 @@ const initialValue: DiscordState = {
   },
 };
 
+const DISCORD_SERVER_STORAGE_KEY = "discord_current_server";
+
 const DiscordContext = createContext<DiscordState>(initialValue);
 
 export const DiscordContextProvider = ({
@@ -68,23 +77,58 @@ export const DiscordContextProvider = ({
 }) => {
   const [myState, setMyState] = useState<DiscordState>(initialValue);
 
+  // Función para obtener URL pública desde supabase
+  const getImageUrl = async (
+    serverName: string
+  ): Promise<string | undefined> => {
+    const { data } = supabase.storage
+      .from("servers")
+      .getPublicUrl(`${serverName}.jpg`);
+    return data?.publicUrl;
+  };
+
+  // Al montar el provider, recuperar servidor guardado en localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem(DISCORD_SERVER_STORAGE_KEY);
+    if (stored) {
+      try {
+        const parsed: DiscordServer = JSON.parse(stored);
+        setMyState((prev) => ({ ...prev, server: parsed }));
+      } catch {
+        // ignore parsing error
+      }
+    }
+  }, []);
+
+  // Guardar servidor en localStorage
+  const persistServer = (server?: DiscordServer) => {
+    if (server) {
+      localStorage.setItem(DISCORD_SERVER_STORAGE_KEY, JSON.stringify(server));
+    } else {
+      localStorage.removeItem(DISCORD_SERVER_STORAGE_KEY);
+    }
+  };
+
   const changeServer = useCallback(
     async (server: DiscordServer | undefined, client: StreamChat) => {
-      // Define filtros básicos
-      let filters: ChannelFilters = {
+      const filters: ChannelFilters = {
         type: "messaging",
         members: { $in: [client.userID as string] },
       };
 
       const channels = await client.queryChannels(filters);
-
       const channelsByCategories = new Map<
         string,
         Array<Channel<DefaultStreamChatGenerics>>
       >();
 
       if (server) {
-        // Filtra canales que pertenecen al servidor seleccionado y agrupa por categorías
+        // Verifica que la imagen esté presente
+        let image = server.image;
+        if (!image) {
+          image = await getImageUrl(server.name);
+        }
+
         const categories = new Set(
           channels
             .filter(
@@ -105,17 +149,26 @@ export const DiscordContextProvider = ({
             )
           );
         }
+
+        const newServer = { name: server.name, image };
+        persistServer(newServer);
+
+        setMyState((prev) => ({
+          ...prev,
+          server: newServer,
+          channelsByCategories,
+        }));
       } else {
-        // Filtramos canales que son DMs (exactamente 2 miembros y ambos son los usuarios involucrados)
+        // Si no hay servidor, borramos localStorage también
+        persistServer(undefined);
+
         const dmChannels = channels.filter((channel) => {
           const members = Object.keys(channel.state.members);
           return (
             members.length === 2 &&
             members.includes(client.userID as string) &&
-            (
-              (channel.data?.data as ChannelData)?.isDM === true ||
-              !(channel.data?.data as ChannelData)?.server
-            )
+            ((channel.data?.data as ChannelData)?.isDM === true ||
+              !(channel.data?.data as ChannelData)?.server)
           );
         });
 
@@ -131,38 +184,33 @@ export const DiscordContextProvider = ({
         });
 
         channelsByCategories.set("Direct Messages", renamedDMs);
+        setMyState((prev) => ({
+          ...prev,
+          server: undefined,
+          channelsByCategories,
+        }));
       }
-
-      setMyState((prev) => ({ ...prev, server, channelsByCategories }));
     },
-    [setMyState]
+    []
   );
 
   const createDirectMessage = useCallback(
     async (client: StreamChat, otherUserId: string) => {
-      const userIds = [client.userID, otherUserId].filter(
-        (id): id is string => typeof id === "string"
-      ).sort();
+      const userIds = [client.userID, otherUserId]
+        .filter((id): id is string => !!id)
+        .sort();
 
-      if (userIds.length !== 2) {
-        throw new Error("Missing user IDs for direct message");
-      }
-
-      // Tomar una parte de los IDs de usuario para mantener el ID del canal corto
-      const channelId = `dm-${userIds[0].substring(0, 20)}-${userIds[1].substring(0, 20)}`;
-
-      let channel = client.channel("messaging", channelId, {
+      const channelId = `dm-${userIds[0].substring(
+        0,
+        20
+      )}-${userIds[1].substring(0, 20)}`;
+      const channel = client.channel("messaging", channelId, {
         members: userIds,
-        data: {
-          isDM: true,
-        },
+        data: { isDM: true },
       });
 
       await channel.create();
-
-      // Actualiza la lista de canales para que aparezca el nuevo DM
-      changeServer(undefined, client);
-
+      await changeServer(undefined, client);
       return channel;
     },
     [changeServer]
@@ -170,13 +218,13 @@ export const DiscordContextProvider = ({
 
   const createCall = useCallback(
     async (
-      client: StreamVideoClient,
+      videoClient: StreamVideoClient,
       server: DiscordServer,
       channelName: string,
       userIds: string[]
     ) => {
       const callId = uuid();
-      const audioCall = client.call("default", callId);
+      const audioCall = videoClient.call("default", callId);
       const members: MemberRequest[] = userIds.map((user_id) => ({ user_id }));
 
       try {
@@ -205,9 +253,26 @@ export const DiscordContextProvider = ({
       client: StreamChat,
       videoClient: StreamVideoClient,
       name: string,
-      imageUrl: string,
+      imageFile: File,
       userIds: string[]
     ) => {
+      // Subir la imagen y obtener URL pública
+      const { data, error } = await supabase.storage
+        .from("servers")
+        .upload(`${name}.jpg`, imageFile, {
+          cacheControl: "3600",
+          upsert: true,
+        });
+
+      if (error) {
+        console.error("Image upload failed", error);
+        return;
+      }
+
+      const imageUrl = supabase.storage
+        .from("servers")
+        .getPublicUrl(`${name}.jpg`).data.publicUrl;
+
       const messagingChannel = client.channel("messaging", uuid(), {
         name: "Welcome",
         members: userIds,
@@ -221,21 +286,15 @@ export const DiscordContextProvider = ({
       try {
         await messagingChannel.create();
 
-        if (myState.server) {
-          await createCall(
-            videoClient,
-            myState.server,
-            "General Voice Channel",
-            userIds
-          );
-        }
+        const server: DiscordServer = { name, image: imageUrl };
 
-        changeServer({ name, image: imageUrl }, client);
+        await createCall(videoClient, server, "General Voice Channel", userIds);
+        changeServer(server, client);
       } catch (err) {
         console.error(err);
       }
     },
-    [changeServer, createCall, myState.server]
+    [changeServer, createCall]
   );
 
   const createChannel = useCallback(
@@ -245,25 +304,26 @@ export const DiscordContextProvider = ({
       category: string,
       userIds: string[]
     ) => {
-      if (client.userID) {
-        const channel = client.channel("messaging", {
-          name,
-          members: userIds,
-          data: {
-            server: myState.server?.name,
-            category,
-          },
-        });
+      if (!myState.server) return;
 
-        try {
-          await channel.create();
-          changeServer(myState.server, client);
-        } catch (err) {
-          console.error(err);
-        }
+      const channel = client.channel("messaging", {
+        name,
+        members: userIds,
+        data: {
+          server: myState.server.name,
+          category,
+          image: myState.server.image,
+        },
+      });
+
+      try {
+        await channel.create();
+        await changeServer(myState.server, client);
+      } catch (err) {
+        console.error(err);
       }
     },
-    [myState.server?.name, myState.server, changeServer]
+    [myState.server, changeServer]
   );
 
   const setCall = useCallback((callId: string | undefined) => {
@@ -274,12 +334,12 @@ export const DiscordContextProvider = ({
     server: myState.server,
     callId: myState.callId,
     channelsByCategories: myState.channelsByCategories,
-    changeServer: changeServer,
-    createServer: createServer,
-    createDirectMessage: createDirectMessage,
-    createChannel: createChannel,
-    createCall: createCall,
-    setCall: setCall,
+    changeServer,
+    createServer,
+    createDirectMessage,
+    createChannel,
+    createCall,
+    setCall,
   };
 
   return (
