@@ -49,7 +49,7 @@ const CreateDirectMessage = () => {
       />
       <button
         onClick={handleCreateDM}
-        className="mt-2 bg-blue-600 text-white px-3 py-1 rounded"
+        className="mt-2 bg-discord text-white font-bold py-2 px-4 rounded uppercase hover:bg-dark-discord"
       >
         Create Direct Message
       </button>
