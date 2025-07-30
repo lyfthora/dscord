@@ -306,7 +306,7 @@ export const DiscordContextProvider = ({
     ) => {
       if (!myState.server) return;
 
-      const channel = client.channel("messaging", {
+      const channel = client.channel("messaging", uuid(), {
         name,
         members: userIds,
         data: {
