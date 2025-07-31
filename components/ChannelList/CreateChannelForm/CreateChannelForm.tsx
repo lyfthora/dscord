@@ -47,6 +47,8 @@ export default function CreateChannelForm(): JSX.Element {
     loadUsers();
   }, [loadUsers]);
 
+  const [formRenderKey, setFormRenderKey] = useState(0);
+
   useEffect(() => {
     const category = params.get("category");
     const isVoice = params.get("isVoice");
@@ -63,6 +65,9 @@ export default function CreateChannelForm(): JSX.Element {
       dialogRef.current.showModal();
     } else {
       dialogRef.current?.close();
+      // Reset the form state and force re-render of the user list
+      setFormData(initialState);
+      setFormRenderKey(prevKey => prevKey + 1);
     }
   }, [showCreateChannelForm]);
 
@@ -168,26 +173,30 @@ export default function CreateChannelForm(): JSX.Element {
                 }
               />
             </div>
-            <label
-              className="labelTitle flex items-center justify-between"
-              htmlFor="category"
-            >
-              Category
-            </label>
-            <div className="flex items-center bg-gray-100">
-              <span className="text-2xl p-2 text-gray-500">#</span>
-              <input
-                type="text"
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={(e) =>
-                  setFormData({ ...formData, category: e.target.value })
-                }
-              />
-            </div>
+            {formData.channelType === "text" && (
+              <>
+                <label
+                  className="labelTitle flex items-center justify-between"
+                  htmlFor="category"
+                >
+                  Category
+                </label>
+                <div className="flex items-center bg-gray-100">
+                  <span className="text-2xl p-2 text-gray-500">#</span>
+                  <input
+                    type="text"
+                    id="category"
+                    name="category"
+                    value={formData.category}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
+                  />
+                </div>
+              </>
+            )}
             <h2 className="mb-2 labelTitle">Add Users</h2>
-            <div className="max-h-64 overflow-y-scroll">
+            <div className="max-h-64 overflow-y-scroll" key={formRenderKey}>
               {users.map((user) => (
                 <UserRow user={user} userChanged={userChanged} key={user.id} />
               ))}
@@ -214,15 +223,30 @@ export default function CreateChannelForm(): JSX.Element {
   );
 
   function buttonDisabled(): boolean {
+    console.log(
+      "Checking disabled state:",
+      {
+        type: formData.channelType,
+        name: formData.channelName,
+        category: formData.category,
+        userCount: formData.users.length
+      }
+    );
+
     if (isDM) {
       return !dmUserId;
-    } else {
-      return (
-        !formData.channelName ||
-        !formData.category ||
-        formData.users.length <= 1
-      );
     }
+
+    if (formData.channelType === "voice") {
+      return !formData.channelName || formData.users.length <= 1;
+    }
+
+    // Default case for text channels
+    return (
+      !formData.channelName ||
+      !formData.category ||
+      formData.users.length <= 1
+    );
   }
 
   function userChanged(user: UserObject, checked: boolean) {
