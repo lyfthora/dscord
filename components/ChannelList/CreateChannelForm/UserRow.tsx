@@ -16,6 +16,7 @@ export default function UserRow({
         type='checkbox'
         name={user.id}
         className='w-4 h-4 mb-0'
+        defaultChecked={false}
         onChange={(event) => {
           userChanged(user, event.target.checked);
         }}
