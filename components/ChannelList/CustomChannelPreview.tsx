@@ -1,7 +1,7 @@
 import {
   ChannelPreviewUIComponentProps,
   useChatContext,
-} from 'stream-chat-react';
+} from "stream-chat-react";
 
 const CustomChannelPreview = (props: ChannelPreviewUIComponentProps) => {
   const { channel } = props;
@@ -9,19 +9,18 @@ const CustomChannelPreview = (props: ChannelPreviewUIComponentProps) => {
   return (
     <div
       className={`flex items-center mx-2 ${
-        props.channel.countUnread() > 0 ? 'channel-container' : ''
+        props.channel.countUnread() > 0 ? "channel-container" : ""
       }`}
     >
       <button
-        className='w-full flex items-center px-2 hover:bg-gray-200 rounded-md'
+        className="w-full flex items-center px-2 py-1 hover:bg-gray-100  rounded-md group"
         onClick={() => setActiveChannel(channel)}
       >
-        <span className='text-sm'>
-          {channel.data?.member_count === 2 ? (
-            channel.data?.name
-          ) : (
-            <><span className='italic text-xl mr-2 text-gray-500'>#</span>{channel.data?.name || 'Channel Preview'}</>
-          )}
+        <span className="text-gray-400 text-xl font-semibold mr-2 group-hover:text-gray-500">
+          #
+        </span>
+        <span className="text-sm font-medium text-black group-hover:text-gray-800">
+          {channel.data?.name || "Channel Preview"}
         </span>
       </button>
     </div>
