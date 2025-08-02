@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import '~stream-chat-react/dist/css/v2/index.css';
+@import "~stream-chat-react/dist/css/v2/index.css";
 
 :root {
   --foreground-rgb: 0, 0, 0;
@@ -17,14 +17,22 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    --background-start-rgb: 55, 65, 81;
+    --background-end-rgb: 55, 65, 81;
   }
+}
+
+.dark .str-chat__main-panel-inner {
+  background-color: #313338; /* Este es tu color --gray-normal */
 }
 
 .str-chat {
   --str-chat__message-list-background-color: white;
   --str-chat__spacing-10: 0;
+}
+
+.dark .str-chat {
+  --str-chat__message-list-background-color: #313338; /* Este es tu color --gray-normal */
 }
 
 body {
@@ -56,15 +64,15 @@ select {
   @apply w-full p-2 rounded;
 }
 
-input[type='text'] {
+input[type="text"] {
   @apply bg-transparent outline-transparent;
 }
 
-input[type='text']:focus {
+input[type="text"]:focus {
   outline: none;
 }
 
-input[type='radio'] {
+input[type="radio"] {
   @apply w-8 h-8 mb-0;
   accent-color: black;
 }
@@ -87,7 +95,7 @@ input[type='radio'] {
   --content-height: 0rem;
   --content-width: 0rem;
   --offset: -0.4rem;
-  content: '';
+  content: "";
   display: block;
   height: var(--content-height);
   width: var(--content-width);
@@ -111,14 +119,14 @@ input[type='radio'] {
 
 .discord-icon {
   @apply bg-white p-3 w-full h-full;
-  content: '';
+  content: "";
 
-  background: url('../assets/discord-black.svg') no-repeat center center, white;
+  background: url("../assets/discord-black.svg") no-repeat center center, white;
   background-origin: content-box;
 }
 
 .discord-icon:hover {
-  background: url('../assets/discord-white.svg') no-repeat center center,
+  background: url("../assets/discord-white.svg") no-repeat center center,
     var(--discord-purple);
   background-origin: content-box;
   --offset: 1.5rem;
@@ -126,12 +134,12 @@ input[type='radio'] {
 
 .online-icon::after {
   @apply block absolute h-4 w-4 bg-green-600 bottom-0 right-0 rounded-full border-2 border-gray-200;
-  content: '';
+  content: "";
 }
 
 .inactive-icon::after {
   @apply block absolute h-full w-0.5 bg-red-400 rotate-45 rounded-xl m-2;
-  content: '';
+  content: "";
 }
 
 .channel-container {
@@ -140,5 +148,5 @@ input[type='radio'] {
 
 .channel-container::before {
   @apply block absolute h-2 w-3 -left-4 bg-gray-700 rounded-xl;
-  content: '';
+  content: "";
 }
