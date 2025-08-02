@@ -48,16 +48,16 @@ const ServerList = () => {
   }, [loadServerList]);
 
   return (
-    <div className="bg-dark-gray h-full flex flex-col items-center">
+    <div className="bg-dark-gray dark:bg-gray-900 h-full flex flex-col items-center">
       <button
-        className={`block p-3 aspect-square sidebar-icon border-t-2 border-t-gray-300 ${
+        className={`block p-3 aspect-square sidebar-icon border-t-2 border-t-gray-300 dark:border-t-gray-700 ${
           activeServer === undefined ? "selected-icon" : ""
         }`}
         onClick={() => changeServer(undefined, client)}
       >
         <div className="rounded-icon discord-icon"></div>
       </button>
-      <div className="border-t-2 border-t-gray-300">
+      <div className="border-t-2 border-t-gray-300 dark:border-t-gray-700">
         {serverList.map((server) => {
           return (
             <button
@@ -78,7 +78,7 @@ const ServerList = () => {
                   alt="Server Icon"
                 />
               ) : (
-                <span className="rounded-icon bg-gray-600 w-[50px] flex items-center justify-center text-sm">
+                <span className="rounded-icon bg-gray-600 dark:bg-gray-700 w-[50px] flex items-center justify-center text-sm">
                   {server.name.charAt(0)}
                 </span>
               )}
@@ -88,7 +88,7 @@ const ServerList = () => {
       </div>
       <Link
         href={"/?createServer=true"}
-        className="flex items-center justify-center rounded-icon bg-white text-green-500 hover:bg-green-500 hover:text-white hover:rounded-xl transition-all duration-200 p-2 my-2 text-2xl font-light h-12 w-12"
+        className="flex items-center justify-center rounded-icon bg-white dark:bg-gray-700 text-green-500 dark:text-green-400 hover:bg-green-500 dark:hover:bg-green-600 hover:text-white dark:hover:text-white hover:rounded-xl transition-all duration-200 p-2 my-2 text-2xl font-light h-12 w-12"
       >
         <span className="inline-block">+</span>
       </Link>
