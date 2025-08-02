@@ -61,18 +61,18 @@ export default function CallList(): JSX.Element {
               <button
                 key={call.id}
                 className={`w-full flex items-center my-1 px-2 py-1 rounded-md group ${
-                  isActive ? "bg-hover-gray" : "hover:bg-light-gray"
+                  isActive ? "bg-hover-gray dark:bg-gray-700" : "hover:bg-light-gray dark:hover:bg-gray-700"
                 }`}
                 onClick={() => {
                   setCall(call.id);
                 }}
               >
-                <Speaker className="w-5 h-5 text-gray-400 mr-2 group-hover:text-gray-500" />
+                <Speaker className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-2 group-hover:text-gray-500 dark:group-hover:text-gray-400" />
                 <span
                   className={`text-sm ${
                     isActive
-                      ? "text-black font-bold"
-                      : "font-semibold text-gray-600 group-hover:text-gray-800"
+                      ? "text-black dark:text-white font-bold"
+                      : "font-semibold text-gray-600 dark:text-gray-200 group-hover:text-gray-800 dark:group-hover:text-white"
                   }`}
                 >
                   {call.state.custom.callName || "Channel Preview"}
