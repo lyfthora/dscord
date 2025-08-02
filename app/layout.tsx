@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   description: 'Powered by Stream Chat',
 };
 
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
+
+// ... (el resto de tus imports)
+
 export default function RootLayout({
   children,
 }: {
@@ -19,12 +23,19 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang='en'>
-        <SupabaseProvider>
-          <DiscordContextProvider>
-            <body className={inter.className}>{children}</body>
-          </DiscordContextProvider>
-        </SupabaseProvider>
+      <html lang="en" suppressHydrationWarning>
+        <body className={`${inter.className} bg-white dark:bg-gray-900`}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            storageKey="discord-theme"
+          >
+            <SupabaseProvider>
+              <DiscordContextProvider>{children}</DiscordContextProvider>
+            </SupabaseProvider>
+          </ThemeProvider>
+        </body>
       </html>
     </ClerkProvider>
   );
