@@ -23,6 +23,10 @@ import { useDiscordContext } from '@/contexts/DiscordContext';
 import MyCall from '@/components/MyCall/MyCall';
 import CustomChannelHeader from './MessageList/CustomChannelHeader/CustomChannelHeader';
 
+import { useTheme } from "next-themes";
+
+// ... (el resto de tus imports)
+
 export default function MyChat({
   apiKey,
   user,
@@ -32,6 +36,7 @@ export default function MyChat({
   user: User;
   token: string;
 }) {
+  const { theme } = useTheme();
   const chatClient = useClient({
     apiKey,
     user,
@@ -54,8 +59,8 @@ export default function MyChat({
 
   return (
     <StreamVideo client={videoClient}>
-      <Chat client={chatClient} theme='str-chat__theme-light'>
-        <section className='flex h-screen w-screen layout'>
+      <Chat client={chatClient} theme={theme === 'dark' ? 'str-chat__theme-dark' : 'str-chat__theme-light'}>
+        <section className='flex h-screen w-screen layout bg-white dark:bg-gray-800'>
           <ServerList />
           <ChannelList List={CustomChannelList} sendChannelsToList={true} />
           {callId && <MyCall callId={callId} />}
