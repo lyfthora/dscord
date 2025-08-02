@@ -75,21 +75,21 @@ const CreateServerForm = () => {
   };
 
   return (
-    <dialog className='absolute z-10 space-y-2 rounded-xl' ref={dialogRef}>
+    <dialog className='absolute z-10 space-y-2 rounded-xl bg-white dark:bg-gray-800' ref={dialogRef}>
       <div className='w-full flex items-center justify-between py-8 px-6'>
-        <h2 className='text-3xl font-semibold text-gray-600'>
+        <h2 className='text-3xl font-semibold text-gray-600 dark:text-gray-200'>
           Create new server
         </h2>
         <Link href='/'>
-          <CloseMark className='w-10 h-10 text-gray-400' />
+          <CloseMark className='w-10 h-10 text-gray-400 dark:text-gray-500' />
         </Link>
       </div>
       <form method='dialog' className='flex flex-col space-y-2 px-6'>
-        <label className='labelTitle' htmlFor='serverName'>
+        <label className='labelTitle dark:text-gray-200' htmlFor='serverName'>
           Server Name
         </label>
-        <div className='flex items-center bg-gray-100'>
-          <span className='text-2xl p-2 text-gray-500'>#</span>
+        <div className='flex items-center bg-gray-100 dark:bg-gray-700'>
+          <span className='text-2xl p-2 text-gray-500 dark:text-gray-400'>#</span>
           <input
             type='text'
             id='serverName'
@@ -99,12 +99,13 @@ const CreateServerForm = () => {
               setFormData({ ...formData, serverName: e.target.value })
             }
             required
+            className='bg-transparent w-full text-black dark:text-white'
           />
         </div>
-        <label className='labelTitle' htmlFor='serverImage'>
+        <label className='labelTitle dark:text-gray-200' htmlFor='serverImage'>
           Server Image
         </label>
-        <div className='flex items-center bg-gray-100'>
+        <div className='flex items-center bg-gray-100 dark:bg-gray-700'>
           <input
             type='file'
             id='serverImage'
@@ -112,22 +113,22 @@ const CreateServerForm = () => {
             onChange={handleFileChange}
             accept='image/*'
             disabled={isUploading}
-            className='mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100'
+            className='mt-1 block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900 file:text-indigo-600 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-800'
           />
           {isUploading && <p>Uploading...</p>}
           {formData.serverImage && !isUploading && (
-            <p className='text-sm text-gray-500'>Image selected</p>
+            <p className='text-sm text-gray-500 dark:text-gray-400'>Image selected</p>
           )}
         </div>
-        <h2 className='mb-2 labelTitle'>Add Users</h2>
+        <h2 className='mb-2 labelTitle dark:text-gray-200'>Add Users</h2>
         <div className='max-h-64 overflow-y-scroll'>
           {users.map((user) => (
             <UserRow user={user} userChanged={userChanged} key={user.id} />
           ))}
         </div>
       </form>
-      <div className='flex space-x-6 items-center justify-end p-6 bg-gray-200'>
-        <Link href={'/'} className='font-semibold text-gray-500'>
+      <div className='flex space-x-6 items-center justify-end p-6 bg-gray-200 dark:bg-gray-900'>
+        <Link href={'/'} className='font-semibold text-gray-500 dark:text-gray-400'>
           Cancel
         </Link>
         <button
