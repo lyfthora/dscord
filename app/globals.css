@@ -150,3 +150,7 @@ input[type="radio"] {
   @apply block absolute h-2 w-3 -left-4 bg-gray-700 rounded-xl;
   content: "";
 }
+
+.str-chat__theme-dark {
+  --str-chat__background-color: #313338;
+}
