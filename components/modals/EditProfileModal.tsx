@@ -71,11 +71,11 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-4">Edit Profile</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-4 text-black dark:text-white">Edit Profile</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               Username
             </label>
             <input
@@ -83,18 +83,18 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-black dark:text-white"
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="avatar" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="avatar" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               Avatar
             </label>
             <input
               id="avatar"
               type="file"
               onChange={(e) => setAvatarFile(e.target.files ? e.target.files[0] : null)}
-              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100"
+              className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900 file:text-indigo-600 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-800"
             />
           </div>
           {uploadError && (
@@ -103,7 +103,7 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
             </div>
           )}
           <div className="flex justify-end space-x-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 bg-gray-200 dark:bg-gray-600 dark:text-gray-200 rounded-md">
               Cancel
             </button>
             <button 

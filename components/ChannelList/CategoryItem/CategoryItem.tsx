@@ -21,7 +21,7 @@ export default function CategoryItem({
   const [isOpen, setIsOpen] = useState(true);
   return (
     <div className='mb-5'>
-      <div className='flex items-center text-gray-500 p-2'>
+      <div className='flex items-center text-gray-500 dark:text-gray-400 p-2'>
         <button
           className='flex w-full items-center justify-start'
           onClick={() => setIsOpen((currentValue) => !currentValue)}

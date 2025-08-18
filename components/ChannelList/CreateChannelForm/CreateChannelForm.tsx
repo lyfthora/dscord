@@ -47,6 +47,8 @@ export default function CreateChannelForm(): JSX.Element {
     loadUsers();
   }, [loadUsers]);
 
+  const [formRenderKey, setFormRenderKey] = useState(0);
+
   useEffect(() => {
     const category = params.get("category");
     const isVoice = params.get("isVoice");
@@ -63,26 +65,29 @@ export default function CreateChannelForm(): JSX.Element {
       dialogRef.current.showModal();
     } else {
       dialogRef.current?.close();
+      // Reset the form state and force re-render of the user list
+      setFormData(initialState);
+      setFormRenderKey(prevKey => prevKey + 1);
     }
   }, [showCreateChannelForm]);
 
   return (
-    <dialog className="absolute z-10 space-y-2 rounded-xl" ref={dialogRef}>
+    <dialog className="absolute z-10 space-y-2 rounded-xl bg-white dark:bg-gray-800" ref={dialogRef}>
       <div className="w-full flex items-center justify-between py-8 px-6">
-        <h2 className="text-3xl font-semibold text-gray-600">
+        <h2 className="text-3xl font-semibold text-gray-600 dark:text-gray-200">
           {isDM ? "Create Direct Message" : "Create Channel"}
         </h2>
         <Link href="/">
-          <CloseMark className="w-10 h-10 text-gray-400" />
+          <CloseMark className="w-10 h-10 text-gray-400 dark:text-gray-500" />
         </Link>
       </div>
       <form method="dialog" className="flex flex-col space-y-4 px-6">
         {isDM ? (
           <div className="space-y-4">
-            <label className="labelTitle" htmlFor="dmUserId">
+            <label className="labelTitle dark:text-gray-200" htmlFor="dmUserId">
               Username
             </label>
-            <div className="flex items-center bg-gray-100">
+            <div className="flex items-center bg-gray-100 dark:bg-gray-700">
               <input
                 type="text"
                 id="dmUserId"
@@ -90,6 +95,7 @@ export default function CreateChannelForm(): JSX.Element {
                 value={dmUserId}
                 onChange={(e) => setDmUserId(e.target.value)}
                 list="users-list"
+                className="bg-transparent w-full text-black dark:text-white"
               />
               <datalist id="users-list">
                 {users.map((user) => (
@@ -103,16 +109,16 @@ export default function CreateChannelForm(): JSX.Element {
         ) : (
           <>
             <div className="space-y-4">
-              <h3 className="labelTitle">Channel Type</h3>
-              <div className="w-full flex space-x-4 items-center bg-gray-100 px-4 py-2 rounded-md">
+              <h3 className="labelTitle dark:text-gray-200">Channel Type</h3>
+              <div className="w-full flex space-x-4 items-center bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-md">
                 <label
                   htmlFor="text"
                   className="flex flex-1 items-center space-x-6"
                 >
-                  <span className="text-4xl text-gray-400">#</span>
+                  <span className="text-4xl text-gray-400 dark:text-gray-500">#</span>
                   <div>
-                    <p className="text-lg text-gray-700 font-semibold">Text</p>
-                    <p className="text-gray-500">
+                    <p className="text-lg text-gray-700 dark:text-gray-200 font-semibold">Text</p>
+                    <p className="text-gray-500 dark:text-gray-400">
                       Send messages, images, GIFs, emoji, opinions, and puns
                     </p>
                   </div>
@@ -128,15 +134,15 @@ export default function CreateChannelForm(): JSX.Element {
                   }
                 />
               </div>
-              <div className="w-full flex space-x-4 items-center bg-gray-100 px-4 py-2 rounded-md">
+              <div className="w-full flex space-x-4 items-center bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-md">
                 <label
                   htmlFor="voice"
                   className="flex flex-1 items-center space-x-4"
                 >
-                  <Speaker className="text-gray-400 w-7 h-7" />
+                  <Speaker className="text-gray-400 dark:text-gray-500 w-7 h-7" />
                   <div>
-                    <p className="text-lg text-gray-700 font-semibold">Voice</p>
-                    <p className="text-gray-500">
+                    <p className="text-lg text-gray-700 dark:text-gray-200 font-semibold">Voice</p>
+                    <p className="text-gray-500 dark:text-gray-400">
                       Hang out together with voice, video, and screen share
                     </p>
                   </div>
@@ -153,11 +159,11 @@ export default function CreateChannelForm(): JSX.Element {
                 />
               </div>
             </div>
-            <label className="labelTitle" htmlFor="channelName">
+            <label className="labelTitle dark:text-gray-200" htmlFor="channelName">
               Channel Name
             </label>
-            <div className="flex items-center bg-gray-100">
-              <span className="text-2xl p-2 text-gray-500">#</span>
+            <div className="flex items-center bg-gray-100 dark:bg-gray-700">
+              <span className="text-2xl p-2 text-gray-500 dark:text-gray-400">#</span>
               <input
                 type="text"
                 id="channelName"
@@ -166,28 +172,34 @@ export default function CreateChannelForm(): JSX.Element {
                 onChange={(e) =>
                   setFormData({ ...formData, channelName: e.target.value })
                 }
+                className="bg-transparent w-full text-black dark:text-white"
               />
             </div>
-            <label
-              className="labelTitle flex items-center justify-between"
-              htmlFor="category"
-            >
-              Category
-            </label>
-            <div className="flex items-center bg-gray-100">
-              <span className="text-2xl p-2 text-gray-500">#</span>
-              <input
-                type="text"
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={(e) =>
-                  setFormData({ ...formData, category: e.target.value })
-                }
-              />
-            </div>
-            <h2 className="mb-2 labelTitle">Add Users</h2>
-            <div className="max-h-64 overflow-y-scroll">
+            {formData.channelType === "text" && (
+              <>
+                <label
+                  className="labelTitle dark:text-gray-200 flex items-center justify-between"
+                  htmlFor="category"
+                >
+                  Category
+                </label>
+                <div className="flex items-center bg-gray-100 dark:bg-gray-700">
+                  <span className="text-2xl p-2 text-gray-500 dark:text-gray-400">#</span>
+                  <input
+                    type="text"
+                    id="category"
+                    name="category"
+                    value={formData.category}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
+                    className="bg-transparent w-full text-black dark:text-white"
+                  />
+                </div>
+              </>
+            )}
+            <h2 className="mb-2 labelTitle dark:text-gray-200">Add Users</h2>
+            <div className="max-h-64 overflow-y-scroll" key={formRenderKey}>
               {users.map((user) => (
                 <UserRow user={user} userChanged={userChanged} key={user.id} />
               ))}
@@ -195,8 +207,8 @@ export default function CreateChannelForm(): JSX.Element {
           </>
         )}
       </form>
-      <div className="flex space-x-6 items-center justify-end p-6 bg-gray-200">
-        <Link href={"/"} className="font-semibold text-gray-500">
+      <div className="flex space-x-6 items-center justify-end p-6 bg-gray-200 dark:bg-gray-900">
+        <Link href={"/"} className="font-semibold text-gray-500 dark:text-gray-400">
           Cancel
         </Link>
         <button
@@ -214,15 +226,30 @@ export default function CreateChannelForm(): JSX.Element {
   );
 
   function buttonDisabled(): boolean {
+    console.log(
+      "Checking disabled state:",
+      {
+        type: formData.channelType,
+        name: formData.channelName,
+        category: formData.category,
+        userCount: formData.users.length
+      }
+    );
+
     if (isDM) {
       return !dmUserId;
-    } else {
-      return (
-        !formData.channelName ||
-        !formData.category ||
-        formData.users.length <= 1
-      );
     }
+
+    if (formData.channelType === "voice") {
+      return !formData.channelName || formData.users.length <= 1;
+    }
+
+    // Default case for text channels
+    return (
+      !formData.channelName ||
+      !formData.category ||
+      formData.users.length <= 1
+    );
   }
 
   function userChanged(user: UserObject, checked: boolean) {

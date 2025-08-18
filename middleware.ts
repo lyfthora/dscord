@@ -8,7 +8,7 @@ import { createClient } from '@/utils/supabase/middleware';
 
 export default authMiddleware({
   // Allow signed out users to access the specified routes:
-  // publicRoutes: ['/anyone-can-visit-this-route'],
+  publicRoutes: ['/api/delete-all-channels'],
   // Prevent the specified routes from accessing
   // authentication information:
   // ignoredRoutes: ['/no-auth-in-this-route'],

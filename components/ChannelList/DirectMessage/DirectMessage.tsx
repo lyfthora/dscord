@@ -1,7 +1,7 @@
 import { useDiscordContext } from "@/contexts/DiscordContext";
 import { useChatContext } from "stream-chat-react";
 import { useState } from "react";
-import { v4 as uuidv4 } from "uuid"; // npm install uuid
+import { v4 as uuidv4 } from "uuid";
 
 const CreateDirectMessage = () => {
   const { client, setActiveChannel } = useChatContext();
@@ -20,9 +20,19 @@ const CreateDirectMessage = () => {
 
       const targetUser = response.users[0];
 
-      // ⚠️ Usar un ID único para forzar la creación
-      const channel = client.channel("messaging", uuidv4(), {
-        members: [client.userID!, targetUser.id],
+      // Generar un ID de canal determinista para DMs
+      const members = [client.userID!, targetUser.id].sort();
+      // Tomar una parte de los IDs de usuario para mantener el ID del canal corto
+      const channelId = `dm-${members[0].substring(
+        0,
+        20
+      )}-${members[1].substring(0, 20)}`;
+
+      const channel = client.channel("messaging", channelId, {
+        members: members,
+        data: {
+          isDirectMessage: true,
+        },
       });
 
       await channel.create();
@@ -45,7 +55,7 @@ const CreateDirectMessage = () => {
       />
       <button
         onClick={handleCreateDM}
-        className="mt-2 bg-blue-600 text-white px-3 py-1 rounded"
+        className="mt-2 bg-discord text-white font-bold py-2 px-4 rounded uppercase hover:bg-dark-discord"
       >
         Create Direct Message
       </button>
