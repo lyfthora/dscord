@@ -6,24 +6,21 @@
 
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --background-rgb: 255, 255, 255;
   --discord-purple: #7289da;
   --dark-discord: #4752c4;
-
   --gray-normal: #313338;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 55, 65, 81;
-    --background-end-rgb: 55, 65, 81;
+    --background-rgb: 30, 30, 30;
   }
 }
 
 .dark .str-chat__main-panel-inner {
-  background-color: #313338; /* Este es tu color --gray-normal */
+  background-color: var(--gray-normal);
 }
 
 .str-chat {
@@ -32,17 +29,20 @@
 }
 
 .dark .str-chat {
-  --str-chat__message-list-background-color: #313338; /* Este es tu color --gray-normal */
+  --str-chat__message-list-background-color: var(--gray-normal);
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background: rgb(var(--background-rgb));
+  margin: 0;
+  padding: 0;
+}
+
+/* Eliminar estilos de fondo predeterminados */
+html,
+body {
+  background: none !important;
 }
 
 .layout {
@@ -153,4 +153,27 @@ input[type="radio"] {
 
 .str-chat__theme-dark {
   --str-chat__background-color: #313338;
+}
+.ascii-loading {
+  background: linear-gradient(
+    90deg,
+    #ffffff 0%,
+    #ffffff 45%,
+    #a78bfa 60%,
+    #ffffff 75%,
+    #ffffff 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: sweep 1s linear infinite;
+}
+
+@keyframes sweep {
+  100% {
+    background-position: 0% center;
+  }
+  0% {
+    background-position: 100% center;
+  }
 }
