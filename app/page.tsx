@@ -1,8 +1,7 @@
 "use client";
 
 import { User } from "stream-chat";
-import { LoadingIndicator } from "stream-chat-react";
-
+import AsciiLoader from "@/components/Ascii/AsciiLoader";
 import { useClerk } from "@clerk/nextjs";
 import { useCallback, useEffect, useState } from "react";
 import MyChat from "@/components/MyChat";
@@ -28,10 +27,8 @@ export type Homestate = {
 
 export default function Home() {
   const [myState, setMyState] = useState<Homestate | undefined>(undefined);
-
   const { user: myUser } = useClerk();
   const router = useRouter();
-
   const registerUser = useCallback(
     async function registerUser() {
       // register user on Stream backend
@@ -92,7 +89,19 @@ export default function Home() {
   }, [registerUser, myUser, router]);
 
   if (!myState) {
-    return <LoadingIndicator />;
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          backgroundColor: "#313338",
+        }}
+      >
+        <AsciiLoader />
+      </div>
+    );
   }
 
   return <MyChat {...myState} />;
