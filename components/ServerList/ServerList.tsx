@@ -48,21 +48,21 @@ const ServerList = () => {
   }, [loadServerList]);
 
   return (
-    <div className="bg-dark-gray dark:bg-gray-900 h-full flex flex-col items-center">
+    <div className="bg-dark-gray dark:bg-black h-full flex flex-col items-center">
       <button
-        className={`block p-3 aspect-square sidebar-icon border-t-2 border-t-gray-300 dark:border-t-gray-700 ${
+        className={`block p-3 aspect-square sidebar-icon partial-bottom-border-server-list ${
           activeServer === undefined ? "selected-icon" : ""
         }`}
         onClick={() => changeServer(undefined, client)}
       >
         <div className="rounded-icon discord-icon"></div>
       </button>
-      <div className="border-t-2 border-t-gray-300 dark:border-t-gray-700">
+      <div className="server-list">
         {serverList.map((server) => {
           return (
             <button
               key={server.name}
-              className={`p-4 sidebar-icon ${
+              className={`p-4 sidebar-icon  ${
                 server === activeServer ? "selected-icon" : ""
               }`}
               onClick={() => {
