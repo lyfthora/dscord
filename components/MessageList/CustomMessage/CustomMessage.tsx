@@ -15,7 +15,7 @@ export default function CustomMessage(): JSX.Element {
     <div
       onMouseEnter={() => setShowOptions(true)}
       onMouseLeave={() => setShowOptions(false)}
-      className='flex relative space-x-2 p-2 rounded-md transition-colors ease-in-out duration-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+            className='flex relative space-x-2 p-2 rounded-md transition-colors ease-in-out duration-200 hover:bg-gray-100 dark:hover:bg-gray-800'
     >
       <Image
         className='rounded-full aspect-square object-cover w-10 h-10'
