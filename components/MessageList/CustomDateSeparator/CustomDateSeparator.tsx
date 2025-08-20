@@ -10,8 +10,8 @@ export default function CustomDateSeparator(
   }
 
   return (
-    <div className="relative flex items-center justify-center my-6 border-l border-white partial-bottom-border">
-      <span className="absolute left-auto right-auto text-xs font-semibold text-white bg-[var(--gray-normal)] px-2 border border-white rounded">
+    <div className="relative flex items-center justify-center my-6 partial-bottom-border">
+      <span className="absolute left-auto right-auto text-xs font-semibold bg-white text-dark  dark:text-white dark:bg-[var(--gray-normal)] px-2">
         {formatDate(date)}
       </span>
     </div>
