@@ -9,7 +9,8 @@
   --background-rgb: 255, 255, 255;
   --discord-purple: #7289da;
   --dark-discord: #4752c4;
-  --gray-normal: #313338;
+  --gray-normal: #060606;
+  --border-color: #181818;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -24,7 +25,7 @@
 }
 
 .str-chat {
-  --str-chat__message-list-background-color: white;
+  /* --str-chat__message-list-background-color: white; */
   --str-chat__spacing-10: 0;
 }
 
@@ -152,7 +153,7 @@ input[type="radio"] {
 }
 
 .str-chat__theme-dark {
-  --str-chat__background-color: #313338;
+  --str-chat__background-color: #060606;
 }
 .ascii-loading {
   background: linear-gradient(
@@ -177,32 +178,42 @@ input[type="radio"] {
     background-position: 100% center;
   }
 }
-.custom-thin-border {
-  border-left: 0.5px solid white;
-  border-top: 0.5px solid white;
-}
 .str-chat__channel {
-  border-left: 1px solid white;
+  background-color: var(--gray-normal);
+  /* border-left: 1px solid white; */
 }
-.partial-bottom-border::before {
-  content: '';
+
+.dark .custom-thin-border {
+  border-left: 0.5px solid var(--border-color);
+  border-right: 0.5px solid var(--border-color);
+  border-top: 0.5px solid var(--border-color);
+  border-top-left-radius: 20px;
+}
+
+.dark .partial-bottom-border::before {
+  content: "";
   position: absolute;
   bottom: 0;
-  left: 30px; /* Adjust this value for the desired space from the left */
-  right: 30px; /* Adjust this value for the desired space from the right */
+  left: 30px;
+  right: 30px;
   height: 1px;
-  background-color: white;
+  background-color: var(--border-color);
 }
-.partial-bottom-border-server-list {
+.dark .partial-bottom-border-server-list {
   position: relative;
 }
 
-.partial-bottom-border-server-list::after {
-  content: '';
+.dark .partial-bottom-border-server-list::after {
+  content: "";
   position: absolute;
   bottom: 0;
-  left: 10px; /* Adjust for desired left space */
-  right: 10px; /* Adjust for desired right space */
+  left: 10px;
+  right: 10px;
   height: 1px;
-  background-color: white;
+  background-color: var(--border-color);
+}
+
+.str-chat__channel-list {
+  --str-chat__channel-list-background-color: black !important;
+  border-inline-end: none !important;
 }
