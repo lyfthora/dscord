@@ -5,7 +5,7 @@ import {
   Present,
 } from "@/components/ChannelList/Icons";
 import { useState } from "react";
-import { SendButton, useChatContext } from "stream-chat-react";
+import { useChatContext } from "stream-chat-react";
 import { plusItems } from "./plusItems";
 import ChannelListMenuRow from "@/components/ChannelList/TopBar/ChannelListMenuRow";
 
@@ -34,21 +34,21 @@ export default function MessageComposer(): JSX.Element {
         </div>
       )}
       <input
-        className="border-transparent bg-transparent outline-none text-sm font-semibold m-0 text-gray-normal dark:text-gray-200"
+        className="border-transparent bg-transparent outline-none text-sm font-semibold m-0 text-gray-normal dark:text-gray-200 w-full"
         type="text"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && message) {
+            channel?.sendMessage({ text: message });
+            setMessage("");
+          }
+        }}
         placeholder="Message #general"
       />
       <Present className="w-8 h-8 hover:text-gray-800 dark:hover:text-gray-200" />
       <GIF className="w-8 h-8 hover:text-gray-800 dark:hover:text-gray-200" />
       <Emoji className="w-8 h-8 hover:text-gray-800 dark:hover:text-gray-200" />
-      <SendButton
-        sendMessage={() => {
-          channel?.sendMessage({ text: message });
-          setMessage("");
-        }}
-      />
     </div>
   );
 }
