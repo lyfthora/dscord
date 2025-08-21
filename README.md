@@ -79,6 +79,4 @@ Problemas comunes:
 
 3. **Error de política de seguridad**: Configura manualmente las políticas de seguridad en Supabase como se describe en la documentación.
 
-## Licencia
 
-MIT
