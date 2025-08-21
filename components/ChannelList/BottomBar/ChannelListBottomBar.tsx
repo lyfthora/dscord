@@ -85,7 +85,7 @@ export default function ChannelListBottomBar(): JSX.Element {
       {menuOpen && (
         <div
           ref={menuRef}
-          className="absolute bottom-full mb-2 -left-1 w-52 p-2 bg-white rounded-md shadow-md"
+          className="absolute bottom-full mb-2 -left-1 w-52 p-2 bg-white dark:bg-[var(--gray-normal)] border dark:border-[var(--border-color)]  rounded-md shadow-md"
         >
           <button
             onClick={() => {
