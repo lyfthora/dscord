@@ -51,14 +51,16 @@ const CreateDirectMessage = () => {
         placeholder="Username"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
-        className="border rounded px-2 py-1 w-full"
+        className="border dark:border-[var(--border-color)] dark:bg-[var(--gray-normal)] rounded px-2 py-1 w-full"
       />
-      <button
-        onClick={handleCreateDM}
-        className="mt-2 bg-discord text-white font-bold py-2 px-4 rounded uppercase hover:bg-dark-discord"
-      >
-        Create Direct Message
-      </button>
+      <div className="flex justify-center mt-3">
+        <button
+          onClick={handleCreateDM}
+          className="w-64 bg-discord dark:bg-[var(--gray-normal)] border dark:border-[var(--border-color)] text-white font-bold py-1 rounded uppercase hover:bg-dark-discord text-center"
+        >
+          DM
+        </button>
+      </div>
     </div>
   );
 };

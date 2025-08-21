@@ -31,9 +31,9 @@ export default function ChannelListBottomBar(): JSX.Element {
   }, [menuRef]);
 
   return (
-    <div className="fixed bottom-[10px] left-[10px] w-[22rem] p-2 bg-light-gray dark:bg-gray-800 flex items-center space-x-3 z-50 border border-black rounded-2xl">
+    <div className="fixed bottom-[10px] left-[10px] w-[22rem] p-2 dark:bg-[var(--gray-normal)] dark:border-[var(--border-color)] flex items-center space-x-3 z-50 border border-black rounded-2xl">
       <button
-        className="flex flex-1 items-center space-x-2 p-1 pr-2 rounded-md hover:bg-hover-gray dark:hover:bg-gray-700"
+        className="flex flex-1 items-center space-x-2 p-1 pr-2 rounded-md hover:bg-hover-gray dark:hover:bg-[var(--hover-dark-gray)]"
         onClick={() => setMenuOpen((currentValue) => !currentValue)}
       >
         {client.user?.image && (
@@ -59,33 +59,33 @@ export default function ChannelListBottomBar(): JSX.Element {
         </p>
       </button>
       <button
-        className={`w-7 h-7 p-1 flex items-center justify-center relative rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-all duration-100 ease-in-out ${
+        className={`p-2 flex items-center justify-center relative rounded-full hover:bg-gray-300 dark:hover:bg-[var(--hover-dark-gray)] transition-all duration-100 ease-in-out ${
           !micActive
             ? "inactive-icon text-red-400"
             : "text-gray-700 dark:text-gray-200"
         }`}
         onClick={() => setMicActive((currentValue) => !currentValue)}
       >
-        <Mic />
+        <Mic className="w-5 h-5" />
       </button>
       <button
-        className={`w-7 h-7 p-1 flex items-center justify-center relative rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-all duration-100 ease-in-out ${
+        className={`p-2 flex items-center justify-center relative rounded-full hover:bg-gray-300 dark:hover:bg-[var(--hover-dark-gray)] transition-all duration-100 ease-in-out ${
           !audioActive
             ? "inactive-icon text-red-400"
             : "text-gray-700 dark:text-gray-200"
         }`}
         onClick={() => setAudioActive((currentValue) => !currentValue)}
       >
-        <Speaker />
+        <Speaker className="w-5 h-5" />
       </button>
       <ThemeSwitcher />
-      <button className="w-7 h-7 p-1 flex items-center justify-center relative rounded-md hover:bg-gray-300 dark:hover:bg-gray-700 transition-all duration-100 ease-in-out text-gray-700 dark:text-gray-200">
-        <Gear className="w-full h-full" />
+      <button className="p-2 flex items-center justify-center relative rounded-full hover:bg-gray-300 dark:hover:bg-[var(--hover-dark-gray)] transition-all duration-100 ease-in-out text-gray-700 dark:text-gray-200">
+        <Gear className="w-5 h-5" />
       </button>
       {menuOpen && (
         <div
           ref={menuRef}
-          className="absolute bottom-full mb-2 -left-1 w-52 p-2 bg-white rounded-md shadow-md"
+          className="absolute bottom-full mb-2 -left-1 w-52 p-2 bg-white dark:bg-[var(--gray-normal)] border dark:border-[var(--border-color)]  rounded-md shadow-md"
         >
           <button
             onClick={() => {

@@ -13,7 +13,7 @@ const CustomChannelList: React.FC = () => {
   const { client } = useChatContext();
 
   return (
-    <div className="w-72 bg-medium-gray dark:bg-gray-normal h-full flex flex-col items-start">
+    <div className="w-72 bg-medium-gray dark:bg-black h-full flex flex-col items-start rounded-bl-none rounded-r-none custom-thin-border">
       {/* Botón para mostrar mensajes directos */}
       <DirectMessage />
 

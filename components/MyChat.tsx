@@ -72,26 +72,31 @@ export default function MyChat({
           theme === "dark" ? "str-chat__theme-dark" : "str-chat__theme-light"
         }
       >
-        <section className="flex h-screen w-screen layout bg-white dark:bg-gray-800">
-          <ServerList />
-          <ChannelList List={CustomChannelList} sendChannelsToList={true} />
-          {callId && <MyCall callId={callId} />}
-          {!callId && (
-            <Channel
-              Message={CustomMessage}
-              Input={MessageComposer}
-              DateSeparator={CustomDateSeparator}
-              reactionOptions={customReactionOptions}
-              HeaderComponent={CustomChannelHeader}
-            >
-              <Window>
-                <MessageList />
-                <MessageInput />
-              </Window>
-              <Thread />
-            </Channel>
-          )}
-        </section>
+        <div className="flex flex-col h-screen w-screen">
+          <div className="p-1 text-center text-sm font-bold bg-black text-white">
+            Discord
+          </div>
+          <section className="flex flex-grow layout bg-white dark:bg-gray-800 gap-y-4">
+            <ServerList />
+            <ChannelList List={CustomChannelList} sendChannelsToList={true} />
+            {callId && <MyCall callId={callId} />}
+            {!callId && (
+              <Channel
+                Message={CustomMessage}
+                Input={MessageComposer}
+                DateSeparator={CustomDateSeparator}
+                reactionOptions={customReactionOptions}
+                HeaderComponent={CustomChannelHeader}
+              >
+                <Window>
+                  <MessageList />
+                  <MessageInput />
+                </Window>
+                <Thread />
+              </Channel>
+            )}
+          </section>
+        </div>
       </Chat>
     </StreamVideo>
   );
