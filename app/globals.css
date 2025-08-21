@@ -9,8 +9,11 @@
   --background-rgb: 255, 255, 255;
   --discord-purple: #7289da;
   --dark-discord: #4752c4;
-  --gray-normal: #060606;
+  --gray-normal: #0c0c0c;
+  --hover-dark-gray: #252525;
+  --hover-dark-gray-menu: #3e3e3e;
   --border-color: #181818;
+  --border-color-chat: #373737;
 }
 
 @media (prefers-color-scheme: dark) {
