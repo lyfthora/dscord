@@ -1,4 +1,4 @@
-# Discord Clone
+# Discord 
 
 Un clon de Discord construido con Next.js, Stream Chat y Clerk para autenticación. Ahora con soporte para almacenamiento de imágenes usando Supabase.
 
