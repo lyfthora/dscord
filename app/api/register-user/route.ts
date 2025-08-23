@@ -12,6 +12,8 @@ export async function POST(request: Request) {
   const userId = body?.userId;
   const username = body?.username;
 
+  const imageUrl = body?.imageUrl;
+
   if (!userId || !username) {
     return Response.error();
   }
@@ -20,11 +22,16 @@ export async function POST(request: Request) {
     id: userId,
     role: "user",
     name: username,
-    imageUrl: `https://getstream.io/random_png/?id=${userId}&name=${username}`,
+    image: imageUrl,
   });
+
+  // Fetch existing user to merge metadata
+  const existingUser = await clerkClient.users.getUser(userId);
+  const existingMetadata = existingUser.publicMetadata || {};
 
   const params = {
     publicMetadata: {
+      ...existingMetadata,
       streamRegistered: true,
       username: username,
     },
