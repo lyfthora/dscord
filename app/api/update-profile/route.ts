@@ -26,12 +26,17 @@ export async function POST(request: Request) {
     id: userId,
     role: "user",
     name: username,
-    image: avatarUrl, // Add this line
+    image: avatarUrl,
     imageUrl: avatarUrl,
   });
 
+  // Fetch existing user to merge metadata
+  const existingUser = await clerkClient.users.getUser(userId);
+  const existingMetadata = existingUser.publicMetadata || {};
+
   const params = {
     publicMetadata: {
+      ...existingMetadata,
       username: username,
       imageUrl: avatarUrl,
     },
