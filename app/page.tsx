@@ -38,10 +38,17 @@ export default function Home() {
           return;
         }
 
+        if (myUser.publicMetadata?.username === undefined) {
+          console.log("Waiting for Clerk publicMetadata to be hydrated...");
+          return;
+        }
+
         console.log("[Effect 1] Performing one-time Stream setup...");
 
-        const username = (myUser.publicMetadata.username as string) || "Unknown";
-        const imageUrl = (myUser.publicMetadata?.imageUrl as string) || myUser.imageUrl;
+        const username =
+          (myUser.publicMetadata.username as string) || "Unknown";
+        const imageUrl =
+          (myUser.publicMetadata?.imageUrl as string) || myUser.imageUrl;
 
         // 1. Register user on our backend if they aren't already
         if (!myUser.publicMetadata.streamRegistered) {
@@ -52,48 +59,94 @@ export default function Home() {
           await fetch("/api/register-user", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: myUser.id, email: myUser.primaryEmailAddress?.emailAddress, username: username }),
+            body: JSON.stringify({
+              userId: myUser.id,
+              email: myUser.primaryEmailAddress?.emailAddress,
+              username: username,
+              imageUrl: imageUrl,
+            }),
           });
         }
 
         // 2. Get Stream token
-        const response = await fetch("/api/token", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: myUser.id }) });
+        const response = await fetch("/api/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: myUser.id }),
+        });
         const { token } = await response.json();
-        if (!token) { console.error("Failed to get Stream token."); return; }
+        if (!token) {
+          console.error("Failed to get Stream token.");
+          return;
+        }
 
         // 3. Connect to Stream
         const client = new StreamChat(apiKey);
-        const userToConnect: User = { id: myUser.id, name: username, image: imageUrl };
+        const userToConnect: User = {
+          id: myUser.id,
+          name: username,
+          image: imageUrl,
+        };
         await client.connectUser(userToConnect, token);
 
-        setMyState({ apiKey: apiKey, user: userToConnect, token: token, client: client });
+        setMyState({
+          apiKey: apiKey,
+          user: userToConnect,
+          token: token,
+          client: client,
+        });
         setStreamSetupComplete(true);
       };
 
       setupStream();
     }
-  }, [isLoaded, isStreamSetupComplete, router, myUser]); // myUser is needed here to trigger on initial load
+  }, [isLoaded, isStreamSetupComplete, router, myUser]);
 
-  // Effect 2: Sync user data changes with Stream after initial setup.
   useEffect(() => {
     if (myUser && myState && isStreamSetupComplete) {
       const username = (myUser.publicMetadata.username as string) || "Unknown";
-      const imageUrl = (myUser.publicMetadata?.imageUrl as string) || myUser.imageUrl;
+      const imageUrl =
+        (myUser.publicMetadata?.imageUrl as string) || myUser.imageUrl;
       const currentUser = myState.user;
 
       if (currentUser.name !== username || currentUser.image !== imageUrl) {
-        console.log("[Effect 2] Detected user data change, updating Stream...");
-        const updatedUser = { ...currentUser, name: username, image: imageUrl };
-        myState.client.updateUser(updatedUser);
-        setMyState(prevState => ({ ...prevState!, user: updatedUser }));
+        console.log(
+          "[Effect 2] Detected user data change, calling update-profile API to sync..."
+        );
+        const updateUserProfile = async () => {
+          await fetch("/api/update-profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: myUser.id,
+              username: username,
+              avatarUrl: imageUrl,
+            }),
+          });
+          // Also update local state immediately for better UX
+          const updatedUser = {
+            ...currentUser,
+            name: username,
+            image: imageUrl,
+          };
+          setMyState((prevState) => ({ ...prevState!, user: updatedUser }));
+        };
+        updateUserProfile();
       }
     }
   }, [myUser, myState, isStreamSetupComplete]); // This effect runs whenever the user object from Clerk changes.
 
-
   if (!myState) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", backgroundColor: "#313338" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          backgroundColor: "#313338",
+        }}
+      >
         <AsciiLoader />
       </div>
     );
@@ -101,4 +154,3 @@ export default function Home() {
 
   return <MyChat {...myState} />;
 }
-
