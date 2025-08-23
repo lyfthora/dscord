@@ -2,17 +2,13 @@
 
 import { User } from "stream-chat";
 import AsciiLoader from "@/components/Ascii/AsciiLoader";
-import { useClerk } from "@clerk/nextjs";
-import { useCallback, useEffect, useState } from "react";
+import { useUser } from "@clerk/nextjs";
+import { useEffect, useState } from "react";
 import MyChat from "@/components/MyChat";
 import { useRouter } from "next/navigation";
-
-// const userId = '7cd445eb-9af2-4505-80a9-aa8543c3343f';
-// const userName = 'Harry Potter';
+import { StreamChat } from "stream-chat";
 
 const apiKey = "c9xtdzvv8faw";
-// const userToken =
-//   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiN2NkNDQ1ZWItOWFmMi00NTA1LTgwYTktYWE4NTQzYzMzNDNmIn0.TtrCA5VoRB2KofI3O6lYjYZd2pHdQT408u7ryeWO4Qg';
 
 export type DiscordServer = {
   name: string;
@@ -23,116 +19,86 @@ export type Homestate = {
   apiKey: string;
   user: User;
   token: string;
+  client: StreamChat;
 };
 
 export default function Home() {
   const [myState, setMyState] = useState<Homestate | undefined>(undefined);
-  const { user: myUser } = useClerk();
+  const { user: myUser, isLoaded } = useUser();
   const router = useRouter();
-  const registerUser = useCallback(
-    async function registerUser() {
-      // register user on Stream backend
-      console.log("[registerUser] myUser:", myUser);
-      const userId = myUser?.id;
-      const mail = myUser?.primaryEmailAddress?.emailAddress;
-      if (userId && mail) {
-        const streamResponse = await fetch("/api/register-user", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId: userId,
-            email: mail,
-            username: myUser.publicMetadata.username,
-          }),
-        });
-        const responseBody = await streamResponse.json();
-        console.log("[registerUser] Stream response:", responseBody);
-        return responseBody;
-      }
-    },
-    [myUser]
-  );
+  const [isStreamSetupComplete, setStreamSetupComplete] = useState(false);
 
+  // Effect 1: One-time setup. Stable dependencies.
   useEffect(() => {
-    if (
-      myUser?.id &&
-      myUser?.primaryEmailAddress?.emailAddress &&
-      !myUser?.publicMetadata.streamRegistered
-    ) {
-      if (!myUser?.publicMetadata.username) {
-        router.push("/register");
-        return;
-      }
-      console.log("[Page - useEffect] Registering user on Stream backend");
-      registerUser().then((result) => {
-        console.log("[Page - useEffect] Result: ", result);
-        getUserToken(
-          myUser.id,
-          (myUser?.publicMetadata.username as string) || "Unknown"
-        );
-      });
-    } else {
-      // take user and get token
-      if (myUser?.id) {
-        console.log(
-          "[Page - useEffect] User already registered on Stream backend: ",
-          myUser?.id
-        );
-        getUserToken(
-          myUser?.id || "Unknown",
-          (myUser?.publicMetadata.username as string) || "Unknown"
-        );
+    if (isLoaded && !isStreamSetupComplete) {
+      const setupStream = async () => {
+        // We need the user object to proceed, but it's not a dependency
+        // to prevent re-runs.
+        if (!myUser) {
+          return;
+        }
+
+        console.log("[Effect 1] Performing one-time Stream setup...");
+
+        const username = (myUser.publicMetadata.username as string) || "Unknown";
+        const imageUrl = (myUser.publicMetadata?.imageUrl as string) || myUser.imageUrl;
+
+        // 1. Register user on our backend if they aren't already
+        if (!myUser.publicMetadata.streamRegistered) {
+          if (!myUser.publicMetadata.username) {
+            router.push("/register");
+            return;
+          }
+          await fetch("/api/register-user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: myUser.id, email: myUser.primaryEmailAddress?.emailAddress, username: username }),
+          });
+        }
+
+        // 2. Get Stream token
+        const response = await fetch("/api/token", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: myUser.id }) });
+        const { token } = await response.json();
+        if (!token) { console.error("Failed to get Stream token."); return; }
+
+        // 3. Connect to Stream
+        const client = new StreamChat(apiKey);
+        const userToConnect: User = { id: myUser.id, name: username, image: imageUrl };
+        await client.connectUser(userToConnect, token);
+
+        setMyState({ apiKey: apiKey, user: userToConnect, token: token, client: client });
+        setStreamSetupComplete(true);
+      };
+
+      setupStream();
+    }
+  }, [isLoaded, isStreamSetupComplete, router, myUser]); // myUser is needed here to trigger on initial load
+
+  // Effect 2: Sync user data changes with Stream after initial setup.
+  useEffect(() => {
+    if (myUser && myState && isStreamSetupComplete) {
+      const username = (myUser.publicMetadata.username as string) || "Unknown";
+      const imageUrl = (myUser.publicMetadata?.imageUrl as string) || myUser.imageUrl;
+      const currentUser = myState.user;
+
+      if (currentUser.name !== username || currentUser.image !== imageUrl) {
+        console.log("[Effect 2] Detected user data change, updating Stream...");
+        const updatedUser = { ...currentUser, name: username, image: imageUrl };
+        myState.client.updateUser(updatedUser);
+        setMyState(prevState => ({ ...prevState!, user: updatedUser }));
       }
     }
-  }, [registerUser, myUser, router]);
+  }, [myUser, myState, isStreamSetupComplete]); // This effect runs whenever the user object from Clerk changes.
+
 
   if (!myState) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          backgroundColor: "#313338",
-        }}
-      >
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", backgroundColor: "#313338" }}>
         <AsciiLoader />
       </div>
     );
   }
 
   return <MyChat {...myState} />;
-
-  async function getUserToken(userId: string, userName: string) {
-    const response = await fetch("/api/token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        userId: userId,
-      }),
-    });
-    const responseBody = await response.json();
-    const token = responseBody.token;
-
-    if (!token) {
-      console.error("Couldn't retrieve token.");
-      return;
-    }
-
-    const user: User = {
-      id: userId,
-      name: userName,
-      image: myUser?.publicMetadata?.imageUrl as string,
-    };
-    setMyState({
-      apiKey: apiKey,
-      user: user,
-      token: token,
-    });
-  }
 }
+
