@@ -2,7 +2,7 @@ import { UserObject } from "@/model/UserObject";
 import { useDiscordContext } from "@/contexts/DiscordContext";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useChatContext } from "stream-chat-react";
 import Link from "next/link";
 import { CloseMark, Speaker } from "../Icons";
@@ -26,7 +26,8 @@ export default function CreateChannelForm(): JSX.Element {
 
   const { client } = useChatContext();
   const videoClient = useStreamVideoClient();
-  const { server, createChannel, createCall, createDirectMessage } = useDiscordContext();
+  const { server, createChannel, createCall, createDirectMessage } =
+    useDiscordContext();
   const initialState: FormState = {
     channelType: "text",
     channelName: "",
@@ -67,12 +68,39 @@ export default function CreateChannelForm(): JSX.Element {
       dialogRef.current?.close();
       // Reset the form state and force re-render of the user list
       setFormData(initialState);
-      setFormRenderKey(prevKey => prevKey + 1);
+      setFormRenderKey((prevKey) => prevKey + 1);
     }
   }, [showCreateChannelForm]);
 
+  // --- Memoized button disabled state --- //
+  const memoizedButtonDisabled = React.useMemo(() => {
+    console.log("Checking disabled state:", {
+      type: formData.channelType,
+      name: formData.channelName,
+      category: formData.category,
+      userCount: formData.users.length,
+    });
+
+    if (isDM) {
+      return !dmUserId;
+    }
+
+    if (formData.channelType === "voice") {
+      return !formData.channelName || formData.users.length <= 1;
+    }
+
+    // Default case for text channels
+    return (
+      !formData.channelName || !formData.category || formData.users.length <= 1
+    );
+  }, [formData, isDM, dmUserId]);
+  // --- End Memoized button disabled state --- //
+
   return (
-    <dialog className="absolute z-10 space-y-2 rounded-xl bg-white dark:bg-gray-800" ref={dialogRef}>
+    <dialog
+      className="absolute z-10 space-y-2 rounded-xl bg-white dark:bg-gray-800"
+      ref={dialogRef}
+    >
       <div className="w-full flex items-center justify-between py-8 px-6">
         <h2 className="text-3xl font-semibold text-gray-600 dark:text-gray-200">
           {isDM ? "Create Direct Message" : "Create Channel"}
@@ -113,11 +141,15 @@ export default function CreateChannelForm(): JSX.Element {
               <div className="w-full flex space-x-4 items-center bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-md">
                 <label
                   htmlFor="text"
-                  className="flex flex-1 items-center space-x-6"
+                  className="flex flex-1 items-center space-x6"
                 >
-                  <span className="text-4xl text-gray-400 dark:text-gray-500">#</span>
+                  <span className="text-4xl text-gray-400 dark:text-gray-500">
+                    #
+                  </span>
                   <div>
-                    <p className="text-lg text-gray-700 dark:text-gray-200 font-semibold">Text</p>
+                    <p className="text-lg text-gray-700 dark:text-gray-200 font-semibold">
+                      Text
+                    </p>
                     <p className="text-gray-500 dark:text-gray-400">
                       Send messages, images, GIFs, emoji, opinions, and puns
                     </p>
@@ -141,7 +173,9 @@ export default function CreateChannelForm(): JSX.Element {
                 >
                   <Speaker className="text-gray-400 dark:text-gray-500 w-7 h-7" />
                   <div>
-                    <p className="text-lg text-gray-700 dark:text-gray-200 font-semibold">Voice</p>
+                    <p className="text-lg text-gray-700 dark:text-gray-200 font-semibold">
+                      Voice
+                    </p>
                     <p className="text-gray-500 dark:text-gray-400">
                       Hang out together with voice, video, and screen share
                     </p>
@@ -159,11 +193,16 @@ export default function CreateChannelForm(): JSX.Element {
                 />
               </div>
             </div>
-            <label className="labelTitle dark:text-gray-200" htmlFor="channelName">
+            <label
+              className="labelTitle dark:text-gray-200"
+              htmlFor="channelName"
+            >
               Channel Name
             </label>
             <div className="flex items-center bg-gray-100 dark:bg-gray-700">
-              <span className="text-2xl p-2 text-gray-500 dark:text-gray-400">#</span>
+              <span className="text-2xl p-2 text-gray-500 dark:text-gray-400">
+                #
+              </span>
               <input
                 type="text"
                 id="channelName"
@@ -184,7 +223,9 @@ export default function CreateChannelForm(): JSX.Element {
                   Category
                 </label>
                 <div className="flex items-center bg-gray-100 dark:bg-gray-700">
-                  <span className="text-2xl p-2 text-gray-500 dark:text-gray-400">#</span>
+                  <span className="text-2xl p-2 text-gray-500 dark:text-gray-400">
+                    #
+                  </span>
                   <input
                     type="text"
                     id="category"
@@ -208,14 +249,17 @@ export default function CreateChannelForm(): JSX.Element {
         )}
       </form>
       <div className="flex space-x-6 items-center justify-end p-6 bg-gray-200 dark:bg-gray-900">
-        <Link href={"/"} className="font-semibold text-gray-500 dark:text-gray-400">
+        <Link
+          href={"/"}
+          className="font-semibold text-gray-500 dark:text-gray-400"
+        >
           Cancel
         </Link>
         <button
           type="submit"
-          disabled={buttonDisabled()}
+          disabled={memoizedButtonDisabled}
           className={`bg-discord rounded py-2 px-4 text-white font-bold uppercase ${
-            buttonDisabled() ? "opacity-50 cursor-not-allowed" : ""
+            memoizedButtonDisabled ? "opacity-50 cursor-not-allowed" : ""
           }`}
           onClick={createClicked}
         >
@@ -224,33 +268,6 @@ export default function CreateChannelForm(): JSX.Element {
       </div>
     </dialog>
   );
-
-  function buttonDisabled(): boolean {
-    console.log(
-      "Checking disabled state:",
-      {
-        type: formData.channelType,
-        name: formData.channelName,
-        category: formData.category,
-        userCount: formData.users.length
-      }
-    );
-
-    if (isDM) {
-      return !dmUserId;
-    }
-
-    if (formData.channelType === "voice") {
-      return !formData.channelName || formData.users.length <= 1;
-    }
-
-    // Default case for text channels
-    return (
-      !formData.channelName ||
-      !formData.category ||
-      formData.users.length <= 1
-    );
-  }
 
   function userChanged(user: UserObject, checked: boolean) {
     if (checked) {
