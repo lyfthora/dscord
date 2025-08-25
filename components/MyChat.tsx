@@ -4,7 +4,6 @@ import {
   Chat,
   Channel,
   ChannelList,
-  ChannelHeader,
   MessageList,
   MessageInput,
   Thread,
@@ -23,8 +22,12 @@ import { useDiscordContext } from "@/contexts/DiscordContext";
 import MyCall from "@/components/MyCall/MyCall";
 import CustomChannelHeader from "./MessageList/CustomChannelHeader/CustomChannelHeader";
 import AsciiLoader from "@/components/Ascii/AsciiLoader";
+import ChannelListBottomBar from "@/components/ChannelList/BottomBar/ChannelListBottomBar";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 
 import { useTheme } from "next-themes";
+
+const SERVER_LIST_WIDTH = 84; // Estimated width of the ServerList component in pixels
 
 export default function MyChat({
   apiKey,
@@ -47,6 +50,58 @@ export default function MyChat({
     tokenOrProvider: token,
   });
   const { callId } = useDiscordContext();
+
+  // --- Resizing Logic --- //
+  const [isResizing, setIsResizing] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(288);
+  const dragInfo = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    dragInfo.current = {
+      startX: e.clientX,
+      startWidth: sidebarWidth,
+    };
+  };
+
+  const handleMouseUp = useCallback(() => {
+    setIsResizing(false);
+    dragInfo.current = null;
+  }, []);
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (isResizing && dragInfo.current) {
+        const deltaX = e.clientX - dragInfo.current.startX;
+        const newWidth = dragInfo.current.startWidth + deltaX;
+
+        if (newWidth >= 178 && newWidth <= 300) {
+          setSidebarWidth(newWidth);
+        }
+      }
+    },
+    [isResizing]
+  );
+
+  useEffect(() => {
+    if (isResizing) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    } else {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing, handleMouseMove, handleMouseUp]);
+
+  const isCollapsed = sidebarWidth <= 248;
+  // --- End Resizing Logic --- //
 
   if (!chatClient || !videoClient) {
     return (
@@ -76,9 +131,18 @@ export default function MyChat({
           <div className="p-1 text-center text-sm font-bold bg-black text-white">
             Discord
           </div>
-          <section className="flex flex-grow layout bg-white dark:bg-gray-800 gap-y-4">
+          <section className="flex flex-grow layout bg-white dark:bg-gray-800 gap-y-4 relative">
             <ServerList />
-            <ChannelList List={CustomChannelList} sendChannelsToList={true} />
+            <ChannelList
+              List={(props) => (
+                <CustomChannelList
+                  {...props}
+                  width={sidebarWidth}
+                  handleMouseDown={handleMouseDown}
+                />
+              )}
+              sendChannelsToList={true}
+            />
             {callId && <MyCall callId={callId} />}
             {!callId && (
               <Channel
@@ -95,6 +159,10 @@ export default function MyChat({
                 <Thread />
               </Channel>
             )}
+            <ChannelListBottomBar
+              isCollapsed={isCollapsed}
+              style={{ width: SERVER_LIST_WIDTH + sidebarWidth - 32, left: 16 }}
+            />
           </section>
         </div>
       </Chat>
