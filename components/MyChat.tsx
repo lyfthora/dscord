@@ -54,6 +54,7 @@ export default function MyChat({
   // --- Resizing Logic --- //
   const [sidebarWidth, setSidebarWidth] = useState(288);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
+  const bottomBarRef = useRef<HTMLDivElement | null>(null);
   const isResizingRef = useRef(false);
   const dragInfo = useRef<{ startX: number; startWidth: number } | null>(null);
 
@@ -86,6 +87,10 @@ export default function MyChat({
 
       if (newWidth >= 178 && newWidth <= 300) {
         sidebarRef.current.style.width = `${newWidth}px`;
+        if (bottomBarRef.current) {
+          bottomBarRef.current.style.width = `${SERVER_LIST_WIDTH + newWidth - 32}px`;
+          bottomBarRef.current.style.left = `16px`; // Ensure left is consistent
+        }
       }
     }
   }, []);
@@ -151,8 +156,8 @@ export default function MyChat({
               </Channel>
             )}
             <ChannelListBottomBar
+              ref={bottomBarRef}
               isCollapsed={isCollapsed}
-              style={{ width: SERVER_LIST_WIDTH + sidebarWidth - 32, left: 16 }}
             />
           </section>
         </div>
