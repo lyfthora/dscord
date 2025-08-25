@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, forwardRef } from "react";
 import { Gear, LeaveServer, Mic, Speaker } from "../Icons";
 import { useChatContext } from "stream-chat-react";
 import { useClerk } from "@clerk/nextjs";
@@ -7,7 +7,13 @@ import ChannelListMenuRow from "../TopBar/ChannelListMenuRow";
 import EditProfileModal from "@/components/modals/EditProfileModal";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
-export default function ChannelListBottomBar({ style, isCollapsed }: { style?: React.CSSProperties, isCollapsed?: boolean }): JSX.Element {
+export default forwardRef(function ChannelListBottomBar(
+  {
+    style,
+    isCollapsed,
+  }: { style?: React.CSSProperties; isCollapsed?: boolean },
+  ref: React.ForwardedRef<HTMLDivElement>
+): JSX.Element {
   const { client } = useChatContext();
   const [micActive, setMicActive] = useState(false);
   const [audioActive, setAudioActive] = useState(false);
@@ -31,8 +37,9 @@ export default function ChannelListBottomBar({ style, isCollapsed }: { style?: R
   }, [menuRef]);
 
   return (
-    <div 
-      style={style} 
+    <div
+      ref={ref}
+      style={style}
       className="fixed bottom-[10px] p-2 dark:bg-[var(--gray-normal)] flex items-center space-x-3 z-50 rounded-2xl"
     >
       <button
@@ -121,4 +128,4 @@ export default function ChannelListBottomBar({ style, isCollapsed }: { style?: R
       />
     </div>
   );
-}
+});
