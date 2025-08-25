@@ -52,53 +52,43 @@ export default function MyChat({
   const { callId } = useDiscordContext();
 
   // --- Resizing Logic --- //
-  const [isResizing, setIsResizing] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(288);
+  const sidebarRef = useRef<HTMLDivElement | null>(null);
+  const isResizingRef = useRef(false);
   const dragInfo = useRef<{ startX: number; startWidth: number } | null>(null);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsResizing(true);
+    isResizingRef.current = true;
     dragInfo.current = {
       startX: e.clientX,
-      startWidth: sidebarWidth,
+      startWidth: sidebarRef.current ? sidebarRef.current.offsetWidth : sidebarWidth,
     };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
   };
 
   const handleMouseUp = useCallback(() => {
-    setIsResizing(false);
+    isResizingRef.current = false;
     dragInfo.current = null;
+    window.removeEventListener("mousemove", handleMouseMove);
+    window.removeEventListener("mouseup", handleMouseUp);
+    if (sidebarRef.current) {
+      setSidebarWidth(sidebarRef.current.offsetWidth);
+    }
   }, []);
 
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (isResizing && dragInfo.current) {
-        const deltaX = e.clientX - dragInfo.current.startX;
-        const newWidth = dragInfo.current.startWidth + deltaX;
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (isResizingRef.current && dragInfo.current && sidebarRef.current) {
+      const deltaX = e.clientX - dragInfo.current.startX;
+      const newWidth = dragInfo.current.startWidth + deltaX;
 
-        if (newWidth >= 178 && newWidth <= 300) {
-          setSidebarWidth(newWidth);
-        }
+      if (newWidth >= 178 && newWidth <= 300) {
+        sidebarRef.current.style.width = `${newWidth}px`;
       }
-    },
-    [isResizing]
-  );
-
-  useEffect(() => {
-    if (isResizing) {
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
-    } else {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
     }
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isResizing, handleMouseMove, handleMouseUp]);
+  }, []);
 
   const isCollapsed = sidebarWidth <= 248;
   // --- End Resizing Logic --- //
@@ -133,16 +123,17 @@ export default function MyChat({
           </div>
           <section className="flex flex-grow layout bg-white dark:bg-gray-800 gap-y-4 relative">
             <ServerList />
-            <ChannelList
-              List={(props) => (
-                <CustomChannelList
-                  {...props}
-                  width={sidebarWidth}
-                  handleMouseDown={handleMouseDown}
-                />
-              )}
-              sendChannelsToList={true}
-            />
+            <div ref={sidebarRef} style={{ width: sidebarWidth }}>
+              <ChannelList
+                List={(props) => (
+                  <CustomChannelList
+                    {...props}
+                    handleMouseDown={handleMouseDown}
+                  />
+                )}
+                sendChannelsToList={true}
+              />
+            </div>
             {callId && <MyCall callId={callId} />}
             {!callId && (
               <Channel
