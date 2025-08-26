@@ -26,7 +26,7 @@ export default function CreateChannelForm(): JSX.Element {
 
   const { client } = useChatContext();
   const videoClient = useStreamVideoClient();
-  const { server, createChannel, createCall, createDirectMessage } =
+  const { server, createChannel, createCall, createDirectMessage, serverMembers } =
     useDiscordContext();
   const initialState: FormState = {
     channelType: "text",
@@ -40,9 +40,21 @@ export default function CreateChannelForm(): JSX.Element {
 
   const loadUsers = useCallback(async () => {
     const response = await fetch("/api/users");
-    const data = (await response.json())?.data as UserObject[];
-    if (data) setUsers(data);
-  }, []);
+    const allUsers = (await response.json())?.data as UserObject[];
+    
+    if (allUsers) {
+      // Si estamos en un servidor, filtramos solo los miembros del servidor
+      if (server) {
+        const filteredUsers = allUsers.filter(user => 
+          server.members.includes(user.id)
+        );
+        setUsers(filteredUsers);
+      } else {
+        // Si no hay servidor (DMs), mostramos todos los usuarios
+        setUsers(allUsers);
+      }
+    }
+  }, [server]);
 
   useEffect(() => {
     loadUsers();
