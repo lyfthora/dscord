@@ -23,7 +23,12 @@ import MyCall from "@/components/MyCall/MyCall";
 import CustomChannelHeader from "./MessageList/CustomChannelHeader/CustomChannelHeader";
 import AsciiLoader from "@/components/Ascii/AsciiLoader";
 import ChannelListBottomBar from "@/components/ChannelList/BottomBar/ChannelListBottomBar";
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  useLayoutEffect,
+  useCallback,
+} from "react";
 
 import { useTheme } from "next-themes";
 
@@ -54,7 +59,9 @@ export default function MyChat({
   // --- Resizing Logic --- //
   const [sidebarWidth, setSidebarWidth] = useState(288);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
-  const bottomBarRef = useRef<HTMLDivElement | null>(null);
+  const [bottomBarNode, setBottomBarNode] = useState<HTMLDivElement | null>(
+    null
+  );
   const isResizingRef = useRef(false);
   const dragInfo = useRef<{ startX: number; startWidth: number } | null>(null);
 
@@ -80,22 +87,32 @@ export default function MyChat({
     }
   }, []);
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (isResizingRef.current && dragInfo.current && sidebarRef.current) {
-      const deltaX = e.clientX - dragInfo.current.startX;
-      const newWidth = dragInfo.current.startWidth + deltaX;
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (isResizingRef.current && dragInfo.current && sidebarRef.current) {
+        const deltaX = e.clientX - dragInfo.current.startX;
+        const newWidth = dragInfo.current.startWidth + deltaX;
 
-      if (newWidth >= 178 && newWidth <= 300) {
-        sidebarRef.current.style.width = `${newWidth}px`;
-        if (bottomBarRef.current) {
-          bottomBarRef.current.style.width = `${SERVER_LIST_WIDTH + newWidth - 32}px`;
-          bottomBarRef.current.style.left = `16px`; // Ensure left is consistent
+        if (newWidth >= 178 && newWidth <= 300) {
+          sidebarRef.current.style.width = `${newWidth}px`;
+          if (bottomBarNode) {
+            bottomBarNode.style.width = `${SERVER_LIST_WIDTH + newWidth - 32}px`;
+            bottomBarNode.style.left = `16px`; // Ensure left is consistent
+          }
         }
       }
-    }
-  }, []);
+    },
+    [bottomBarNode] // Add dependency here
+  );
 
   const isCollapsed = sidebarWidth <= 248;
+
+  useLayoutEffect(() => {
+    if (bottomBarNode) {
+      bottomBarNode.style.width = `${SERVER_LIST_WIDTH + sidebarWidth - 32}px`;
+      bottomBarNode.style.left = `16px`;
+    }
+  }, [bottomBarNode, sidebarWidth]); // Effect now depends on the node itself
   // --- End Resizing Logic --- //
 
   if (!chatClient || !videoClient) {
@@ -156,7 +173,7 @@ export default function MyChat({
               </Channel>
             )}
             <ChannelListBottomBar
-              ref={bottomBarRef}
+              ref={setBottomBarNode} // Use the callback ref here
               isCollapsed={isCollapsed}
             />
           </section>
