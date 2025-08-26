@@ -12,7 +12,8 @@ const apiKey = "c9xtdzvv8faw";
 
 export type DiscordServer = {
   name: string;
-  image: string | undefined;
+  image: string;
+  members: string[]; // IDs de los miembros
 };
 
 export type Homestate = {
