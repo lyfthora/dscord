@@ -22,23 +22,35 @@ const ServerList = () => {
       type: "messaging",
       members: { $in: [client.userID as string] },
     });
-    const serverSet: Set<DiscordServer> = new Set(
-      channels
-        .map((channel: Channel) => {
-          const data = channel.data?.data as ChannelData;
-          return {
-            name: data?.server ?? "Unknown",
-            image: data?.image,
-          };
-        })
-        .filter((server: DiscordServer) => server.name !== "Unknown")
-        .filter(
-          (server: DiscordServer, index, self) =>
-            index ===
-            self.findIndex((serverObject) => serverObject.name == server.name)
-        )
-    );
-    const serverArray = Array.from(serverSet.values());
+    
+    const serverMap = new Map<string, DiscordServer>();
+    
+    channels.forEach((channel: Channel) => {
+      const data = channel.data?.data as ChannelData;
+      if (!data?.server) return;
+      
+      const members = Array.from(
+        new Set([...Object.keys(channel.state.members)])
+      );
+      
+      if (serverMap.has(data.server)) {
+        // Update members if needed
+        const existingServer = serverMap.get(data.server)!;
+        const uniqueMembers = new Set([...existingServer.members, ...members]);
+        serverMap.set(data.server, {
+          ...existingServer,
+          members: Array.from(uniqueMembers)
+        });
+      } else {
+        serverMap.set(data.server, {
+          name: data.server,
+          image: data.image || '',
+          members
+        });
+      }
+    });
+    
+    const serverArray = Array.from(serverMap.values());
     setServerList(serverArray);
     changeServer(undefined, client);
   }, [client, changeServer]);
