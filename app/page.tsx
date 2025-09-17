@@ -28,21 +28,14 @@ export default function Home() {
   const { user: myUser, isLoaded } = useUser();
   const router = useRouter();
   const [isStreamSetupComplete, setStreamSetupComplete] = useState(false);
-
-  // Effect 1: Sets up the Stream client when the user is loaded.
   useEffect(() => {
     const setup = async () => {
-      // Don't do anything until Clerk is loaded and we have a user.
       if (!isLoaded || !myUser) {
         return;
       }
-
-      // If stream is already set up, we're done.
       if (isStreamSetupComplete) {
         return;
       }
-
-      // If the user doesn't have a username in metadata, they need to register.
       if (!myUser.publicMetadata.username) {
         router.push("/register");
         return;
@@ -122,7 +115,6 @@ export default function Home() {
               avatarUrl: imageUrl,
             }),
           });
-          // Also update local state immediately for better UX
           const updatedUser = {
             ...currentUser,
             name: username,
@@ -133,7 +125,7 @@ export default function Home() {
         updateUserProfile();
       }
     }
-  }, [myUser, myState, isStreamSetupComplete]); // This effect runs whenever the user object from Clerk changes.
+  }, [myUser, myState, isStreamSetupComplete]);
 
   if (!myState) {
     return (
