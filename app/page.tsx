@@ -29,79 +29,77 @@ export default function Home() {
   const router = useRouter();
   const [isStreamSetupComplete, setStreamSetupComplete] = useState(false);
 
-  // Effect 1: One-time setup. Stable dependencies.
+  // Effect 1: Sets up the Stream client when the user is loaded.
   useEffect(() => {
-    if (isLoaded && !isStreamSetupComplete) {
-      const setupStream = async () => {
-        // We need the user object to proceed, but it's not a dependency
-        // to prevent re-runs.
-        if (!myUser) {
-          return;
-        }
+    const setup = async () => {
+      // Don't do anything until Clerk is loaded and we have a user.
+      if (!isLoaded || !myUser) {
+        return;
+      }
 
-        if (myUser.publicMetadata?.username === undefined) {
-          console.log("Waiting for Clerk publicMetadata to be hydrated...");
-          return;
-        }
+      // If stream is already set up, we're done.
+      if (isStreamSetupComplete) {
+        return;
+      }
 
-        console.log("[Effect 1] Performing one-time Stream setup...");
+      // If the user doesn't have a username in metadata, they need to register.
+      if (!myUser.publicMetadata.username) {
+        router.push("/register");
+        return;
+      }
 
-        const username =
-          (myUser.publicMetadata.username as string) || "Unknown";
-        const imageUrl =
-          (myUser.publicMetadata?.imageUrl as string) || myUser.imageUrl;
+      console.log("[Effect 1] Performing one-time Stream setup...");
 
-        // 1. Register user on our backend if they aren't already
-        if (!myUser.publicMetadata.streamRegistered) {
-          if (!myUser.publicMetadata.username) {
-            router.push("/register");
-            return;
-          }
-          await fetch("/api/register-user", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              userId: myUser.id,
-              email: myUser.primaryEmailAddress?.emailAddress,
-              username: username,
-              imageUrl: imageUrl,
-            }),
-          });
-        }
+      const username = myUser.publicMetadata.username as string;
+      const imageUrl =
+        (myUser.publicMetadata?.imageUrl as string) || myUser.imageUrl;
 
-        // 2. Get Stream token
-        const response = await fetch("/api/token", {
+      // 1. Register user on our backend if they aren't already
+      if (!myUser.publicMetadata.streamRegistered) {
+        await fetch("/api/register-user", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: myUser.id }),
+          body: JSON.stringify({
+            userId: myUser.id,
+            email: myUser.primaryEmailAddress?.emailAddress,
+            username: username,
+            imageUrl: imageUrl,
+          }),
         });
-        const { token } = await response.json();
-        if (!token) {
-          console.error("Failed to get Stream token.");
-          return;
-        }
+      }
 
-        // 3. Connect to Stream
-        const client = new StreamChat(apiKey);
-        const userToConnect: User = {
-          id: myUser.id,
-          name: username,
-          image: imageUrl,
-        };
-        await client.connectUser(userToConnect, token);
+      // 2. Get Stream token
+      const response = await fetch("/api/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: myUser.id }),
+      });
+      const { token } = await response.json();
+      if (!token) {
+        console.error("Failed to get Stream token.");
+        return;
+      }
 
-        setMyState({
-          apiKey: apiKey,
-          user: userToConnect,
-          token: token,
-          client: client,
-        });
-        setStreamSetupComplete(true);
+      // 3. Connect to Stream
+      const client = new StreamChat(apiKey);
+      const userToConnect: User = {
+        id: myUser.id,
+        name: username,
+        image: imageUrl,
       };
+      await client.connectUser(userToConnect, token);
 
-      setupStream();
-    }
-  }, [isLoaded, isStreamSetupComplete, router, myUser]);
+      setMyState({
+        apiKey: apiKey,
+        user: userToConnect,
+        token: token,
+        client: client,
+      });
+      setStreamSetupComplete(true);
+    };
+
+    setup();
+  }, [isLoaded, myUser, isStreamSetupComplete, router]);
 
   useEffect(() => {
     if (myUser && myState && isStreamSetupComplete) {
