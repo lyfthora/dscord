@@ -1,20 +1,19 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+
 import { useEffect, useState } from "react";
 
 export default function RegisterPage() {
   const { user } = useUser();
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (user?.publicMetadata.streamRegistered) {
-      router.push("/");
+      window.location.assign("/");
     }
-  }, [user, router]);
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +32,7 @@ export default function RegisterPage() {
     });
 
     if (res.ok) {
-      router.push("/");
+      window.location.assign("/");
     } else {
       const data = await res.json();
       setError(data.error);

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, forwardRef } from "react";
 import { Gear, LeaveServer, Mic, Speaker } from "../Icons";
 import { useChatContext } from "stream-chat-react";
 import { useClerk } from "@clerk/nextjs";
@@ -7,7 +7,13 @@ import ChannelListMenuRow from "../TopBar/ChannelListMenuRow";
 import EditProfileModal from "@/components/modals/EditProfileModal";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
-export default function ChannelListBottomBar(): JSX.Element {
+export default forwardRef(function ChannelListBottomBar(
+  {
+    style,
+    isCollapsed,
+  }: { style?: React.CSSProperties; isCollapsed?: boolean },
+  ref: React.ForwardedRef<HTMLDivElement>
+): JSX.Element {
   const { client } = useChatContext();
   const [micActive, setMicActive] = useState(false);
   const [audioActive, setAudioActive] = useState(false);
@@ -31,7 +37,11 @@ export default function ChannelListBottomBar(): JSX.Element {
   }, [menuRef]);
 
   return (
-    <div className="fixed bottom-[10px] left-[10px] w-[22rem] p-2 dark:bg-[var(--gray-normal)] dark:border-[var(--border-color)] flex items-center space-x-3 z-50 border border-black rounded-2xl">
+    <div
+      ref={ref}
+      style={style}
+      className="fixed bottom-[10px] p-2 dark:bg-[var(--gray-normal)] flex items-center space-x-3 z-50 rounded-2xl"
+    >
       <button
         className="flex flex-1 items-center space-x-2 p-1 pr-2 rounded-md hover:bg-hover-gray dark:hover:bg-[var(--hover-dark-gray)]"
         onClick={() => setMenuOpen((currentValue) => !currentValue)}
@@ -78,10 +88,12 @@ export default function ChannelListBottomBar(): JSX.Element {
       >
         <Speaker className="w-5 h-5" />
       </button>
-      <ThemeSwitcher />
-      <button className="p-2 flex items-center justify-center relative rounded-full hover:bg-gray-300 dark:hover:bg-[var(--hover-dark-gray)] transition-all duration-100 ease-in-out text-gray-700 dark:text-gray-200">
-        <Gear className="w-5 h-5" />
-      </button>
+      {!isCollapsed && <ThemeSwitcher />}
+      {!isCollapsed && (
+        <button className="p-2 flex items-center justify-center relative rounded-full hover:bg-gray-300 dark:hover:bg-[var(--hover-dark-gray)] transition-all duration-100 ease-in-out text-gray-700 dark:text-gray-200">
+          <Gear className="w-5 h-5" />
+        </button>
+      )}
       {menuOpen && (
         <div
           ref={menuRef}
@@ -116,4 +128,4 @@ export default function ChannelListBottomBar(): JSX.Element {
       />
     </div>
   );
-}
+});

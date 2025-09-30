@@ -4,7 +4,6 @@ import {
   Chat,
   Channel,
   ChannelList,
-  ChannelHeader,
   MessageList,
   MessageInput,
   Thread,
@@ -23,8 +22,17 @@ import { useDiscordContext } from "@/contexts/DiscordContext";
 import MyCall from "@/components/MyCall/MyCall";
 import CustomChannelHeader from "./MessageList/CustomChannelHeader/CustomChannelHeader";
 import AsciiLoader from "@/components/Ascii/AsciiLoader";
+import ChannelListBottomBar from "@/components/ChannelList/BottomBar/ChannelListBottomBar";
+import React, {
+  useState,
+  useRef,
+  useLayoutEffect,
+  useCallback,
+} from "react";
 
 import { useTheme } from "next-themes";
+
+const SERVER_LIST_WIDTH = 84; // Estimated width of the ServerList component in pixels
 
 export default function MyChat({
   apiKey,
@@ -47,6 +55,65 @@ export default function MyChat({
     tokenOrProvider: token,
   });
   const { callId } = useDiscordContext();
+
+  // --- Resizing Logic --- //
+  const [sidebarWidth, setSidebarWidth] = useState(288);
+  const sidebarRef = useRef<HTMLDivElement | null>(null);
+  const [bottomBarNode, setBottomBarNode] = useState<HTMLDivElement | null>(
+    null
+  );
+  const isResizingRef = useRef(false);
+  const dragInfo = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isResizingRef.current = true;
+    dragInfo.current = {
+      startX: e.clientX,
+      startWidth: sidebarRef.current ? sidebarRef.current.offsetWidth : sidebarWidth,
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const handleMouseUp = useCallback(() => {
+    isResizingRef.current = false;
+    dragInfo.current = null;
+    window.removeEventListener("mousemove", handleMouseMove);
+    window.removeEventListener("mouseup", handleMouseUp);
+    if (sidebarRef.current) {
+      setSidebarWidth(sidebarRef.current.offsetWidth);
+    }
+  }, []);
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (isResizingRef.current && dragInfo.current && sidebarRef.current) {
+        const deltaX = e.clientX - dragInfo.current.startX;
+        const newWidth = dragInfo.current.startWidth + deltaX;
+
+        if (newWidth >= 178 && newWidth <= 300) {
+          sidebarRef.current.style.width = `${newWidth}px`;
+          if (bottomBarNode) {
+            bottomBarNode.style.width = `${SERVER_LIST_WIDTH + newWidth - 32}px`;
+            bottomBarNode.style.left = `16px`; // Ensure left is consistent
+          }
+        }
+      }
+    },
+    [bottomBarNode] // Add dependency here
+  );
+
+  const isCollapsed = sidebarWidth <= 248;
+
+  useLayoutEffect(() => {
+    if (bottomBarNode) {
+      bottomBarNode.style.width = `${SERVER_LIST_WIDTH + sidebarWidth - 32}px`;
+      bottomBarNode.style.left = `16px`;
+    }
+  }, [bottomBarNode, sidebarWidth]); // Effect now depends on the node itself
+  // --- End Resizing Logic --- //
 
   if (!chatClient || !videoClient) {
     return (
@@ -76,9 +143,19 @@ export default function MyChat({
           <div className="p-1 text-center text-sm font-bold bg-black text-white">
             Discord
           </div>
-          <section className="flex flex-grow layout bg-white dark:bg-gray-800 gap-y-4">
+          <section className="flex flex-grow layout bg-white dark:bg-gray-800 gap-y-4 relative">
             <ServerList />
-            <ChannelList List={CustomChannelList} sendChannelsToList={true} />
+            <div ref={sidebarRef} style={{ width: sidebarWidth }}>
+              <ChannelList
+                List={(props) => (
+                  <CustomChannelList
+                    {...props}
+                    handleMouseDown={handleMouseDown}
+                  />
+                )}
+                sendChannelsToList={true}
+              />
+            </div>
             {callId && <MyCall callId={callId} />}
             {!callId && (
               <Channel
@@ -95,6 +172,10 @@ export default function MyChat({
                 <Thread />
               </Channel>
             )}
+            <ChannelListBottomBar
+              ref={setBottomBarNode} // Use the callback ref here
+              isCollapsed={isCollapsed}
+            />
           </section>
         </div>
       </Chat>

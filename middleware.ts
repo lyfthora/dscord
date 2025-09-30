@@ -1,14 +1,14 @@
-import { authMiddleware, clerkClient, redirectToSignIn } from '@clerk/nextjs';
-import { redirect } from 'next/navigation';
-import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/middleware';
+import { authMiddleware, clerkClient, redirectToSignIn } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
+import { createClient } from "@/utils/supabase/update-session";
 
 // See https://clerk.com/docs/references/nextjs/auth-middleware
 // for more information about configuring your Middleware
 
 export default authMiddleware({
   // Allow signed out users to access the specified routes:
-  publicRoutes: ['/api/delete-all-channels'],
+  publicRoutes: ["/api/delete-all-channels"],
   // Prevent the specified routes from accessing
   // authentication information:
   // ignoredRoutes: ['/no-auth-in-this-route'],
@@ -24,14 +24,14 @@ export default authMiddleware({
       // return redirect('/register');
     } else {
       console.log(
-        '[Middleware] User already registered on Stream backend: ',
+        "[Middleware] User already registered on Stream backend: ",
         auth.userId
       );
     }
 
     // Integrar el middleware de Supabase
     const supabaseResponse = createClient(request);
-    
+
     return supabaseResponse;
   },
 });
@@ -41,8 +41,8 @@ export const config = {
     // Exclude files with a "." followed by an extension, which are typically static files.
     // Exclude files in the _next directory, which are Next.js internals.
 
-    '/((?!.+\\.[\\w]+$|_next).*)',
+    "/((?!.+\\.[\\w]+$|_next).*)",
     // Re-include any files in the api or trpc folders that might have an extension
-    '/(api|trpc)(.*)',
+    "/(api|trpc)(.*)",
   ],
 };

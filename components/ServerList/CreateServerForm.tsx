@@ -74,6 +74,37 @@ const CreateServerForm = () => {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.serverName || !client || !videoClient) return;
+
+    try {
+      const selectedUserIds = formData.users.map(user => user.id);
+      
+      // Si hay una imagen seleccionada, la subimos primero
+      let imageFileToUse = imageFile || new File([], 'default-icon.png');
+      
+      await createServer(
+        client,
+        videoClient,
+        formData.serverName,
+        imageFileToUse,
+        selectedUserIds
+      );
+      
+      // Reset form
+      setFormData(initialState);
+      setImageFile(null);
+      
+      // Cerrar el diálogo
+      const url = new URL(window.location.href);
+      url.searchParams.delete('createServer');
+      router.push(url.toString());
+    } catch (error) {
+      console.error('Error al crear el servidor:', error);
+    }
+  };
+
   return (
     <dialog className='absolute z-10 space-y-2 rounded-xl bg-white dark:bg-gray-800' ref={dialogRef}>
       <div className='w-full flex items-center justify-between py-8 px-6'>
@@ -84,7 +115,7 @@ const CreateServerForm = () => {
           <CloseMark className='w-10 h-10 text-gray-400 dark:text-gray-500' />
         </Link>
       </div>
-      <form method='dialog' className='flex flex-col space-y-2 px-6'>
+      <form onSubmit={handleSubmit} className='flex flex-col space-y-2 px-6 pb-6'>
         <label className='labelTitle dark:text-gray-200' htmlFor='serverName'>
           Server Name
         </label>
@@ -99,13 +130,13 @@ const CreateServerForm = () => {
               setFormData({ ...formData, serverName: e.target.value })
             }
             required
-            className='bg-transparent w-full text-black dark:text-white'
+            className='bg-transparent w-full text-black dark:text-white p-2'
           />
         </div>
         <label className='labelTitle dark:text-gray-200' htmlFor='serverImage'>
           Server Image
         </label>
-        <div className='flex items-center bg-gray-100 dark:bg-gray-700'>
+        <div className='flex items-center bg-gray-100 dark:bg-gray-700 p-2 rounded'>
           <input
             type='file'
             id='serverImage'
@@ -113,74 +144,57 @@ const CreateServerForm = () => {
             onChange={handleFileChange}
             accept='image/*'
             disabled={isUploading}
-            className='mt-1 block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900 file:text-indigo-600 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-800'
+            className='w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900 file:text-indigo-600 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-800'
           />
-          {isUploading && <p>Uploading...</p>}
-          {formData.serverImage && !isUploading && (
-            <p className='text-sm text-gray-500 dark:text-gray-400'>Image selected</p>
+          {isUploading && <p className='text-sm text-gray-500 dark:text-gray-400 ml-2'>Uploading...</p>}
+          {imageFile && !isUploading && (
+            <p className='text-sm text-gray-500 dark:text-gray-400 ml-2'>Image selected</p>
           )}
         </div>
         <h2 className='mb-2 labelTitle dark:text-gray-200'>Add Users</h2>
-        <div className='max-h-64 overflow-y-scroll'>
+        <div className='max-h-64 overflow-y-scroll mb-4'>
           {users.map((user) => (
-            <UserRow user={user} userChanged={userChanged} key={user.id} />
+            <UserRow 
+              user={user} 
+              userChanged={(user, checked) => {
+                if (checked) {
+                  setFormData({
+                    ...formData,
+                    users: [...formData.users, user],
+                  });
+                } else {
+                  setFormData({
+                    ...formData,
+                    users: formData.users.filter((thisUser) => thisUser.id !== user.id),
+                  });
+                }
+              }} 
+              key={user.id} 
+            />
           ))}
         </div>
+        
+        <div className='flex space-x-6 items-center justify-end pt-4 border-t border-gray-200 dark:border-gray-700'>
+          <Link 
+            href='/' 
+            className='font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+          >
+            Cancel
+          </Link>
+          <button
+            type='submit'
+            disabled={!formData.serverName || !client || !videoClient || isUploading}
+            className={`bg-discord rounded py-2 px-4 text-white font-bold uppercase ${
+              (!formData.serverName || !client || !videoClient || isUploading) 
+                ? 'opacity-50 cursor-not-allowed' 
+                : 'hover:bg-indigo-600 transition-colors'
+            }`}
+          >
+            {isUploading ? 'Creating...' : 'Create Server'}
+          </button>
+        </div>
       </form>
-      <div className='flex space-x-6 items-center justify-end p-6 bg-gray-200 dark:bg-gray-900'>
-        <Link href={'/'} className='font-semibold text-gray-500 dark:text-gray-400'>
-          Cancel
-        </Link>
-        <button
-          type='submit'
-          disabled={buttonDisabled() || isUploading}
-          className={`bg-discord rounded py-2 px-4 text-white font-bold uppercase ${
-            (buttonDisabled() || isUploading) ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-          onClick={createClicked}
-        >
-          Create Server
-        </button>
-      </div>
     </dialog>
   );
-
-  function buttonDisabled(): boolean {
-    return (
-      !formData.serverName ||
-      !imageFile ||
-      formData.users.length <= 1
-    );
-  }
-
-  function userChanged(user: UserObject, checked: boolean) {
-    if (checked) {
-      setFormData({
-        ...formData,
-        users: [...formData.users, user],
-      });
-    } else {
-      setFormData({
-        ...formData,
-        users: formData.users.filter((thisUser) => thisUser.id !== user.id),
-      });
-    }
-  }
-
-  function createClicked() {
-    if (!videoClient || !imageFile) {
-      console.log('[CreateServerForm] Video client or image file not available');
-      return;
-    }
-    createServer(
-      client,
-      videoClient,
-      formData.serverName,
-      imageFile,
-      formData.users.map((user) => user.id)
-    );
-    setFormData(initialState);
-    router.replace('/');
-  }
 };
 export default CreateServerForm;

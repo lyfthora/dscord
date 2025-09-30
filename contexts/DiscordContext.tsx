@@ -25,6 +25,7 @@ type DiscordState = {
   server?: DiscordServer;
   callId: string | undefined;
   channelsByCategories: Map<string, Array<Channel<DefaultStreamChatGenerics>>>;
+  serverMembers: string[];
   changeServer: (server: DiscordServer | undefined, client: StreamChat) => void;
   createDirectMessage: (
     client: StreamChat,
@@ -36,7 +37,7 @@ type DiscordState = {
     name: string,
     imageFile: File,
     userIds: string[]
-  ) => void;
+  ) => Promise<DiscordServer>;
   createChannel: (
     client: StreamChat,
     name: string,
@@ -56,14 +57,13 @@ const initialValue: DiscordState = {
   server: undefined,
   callId: undefined,
   channelsByCategories: new Map(),
+  serverMembers: [],
   changeServer: () => {},
-  createServer: () => {},
+  createServer: async () => ({} as DiscordServer),
   createChannel: () => {},
   createCall: async () => {},
   setCall: () => {},
-  createDirectMessage: async () => {
-    throw new Error("createDirectMessage not implemented");
-  },
+  createDirectMessage: async () => ({} as Channel),
 };
 
 const DISCORD_SERVER_STORAGE_KEY = "discord_current_server";
@@ -78,13 +78,11 @@ export const DiscordContextProvider = ({
   const [myState, setMyState] = useState<DiscordState>(initialValue);
 
   // Función para obtener URL pública desde supabase
-  const getImageUrl = async (
-    serverName: string
-  ): Promise<string | undefined> => {
+  const getImageUrl = async (serverName: string): Promise<string> => {
     const { data } = supabase.storage
       .from("servers")
       .getPublicUrl(`${serverName}.jpg`);
-    return data?.publicUrl;
+    return data?.publicUrl || '';
   };
 
   // Al montar el provider, recuperar servidor guardado en localStorage
@@ -123,10 +121,10 @@ export const DiscordContextProvider = ({
       >();
 
       if (server) {
-        // Verifica que la imagen esté presente
         let image = server.image;
         if (!image) {
-          image = await getImageUrl(server.name);
+          const fetchedImage = await getImageUrl(server.name);
+          image = fetchedImage;
         }
 
         const categories = new Set(
@@ -150,13 +148,28 @@ export const DiscordContextProvider = ({
           );
         }
 
-        const newServer = { name: server.name, image };
-        persistServer(newServer);
+        const members = Array.from(
+          new Set(
+            channels
+              .filter(
+                (channel) =>
+                  (channel.data?.data as ChannelData)?.server === server.name
+              )
+              .flatMap((channel) => Object.keys(channel.state.members))
+          )
+        );
+
+        const updatedServer: DiscordServer = {
+          ...server,
+          image: image,
+          members: members.length > 0 ? members : server.members || []
+        };
 
         setMyState((prev) => ({
           ...prev,
-          server: newServer,
+          server: updatedServer,
           channelsByCategories,
+          serverMembers: members
         }));
       } else {
         // Si no hay servidor, borramos localStorage también
@@ -188,6 +201,7 @@ export const DiscordContextProvider = ({
           ...prev,
           server: undefined,
           channelsByCategories,
+          serverMembers: [],
         }));
       }
     },
@@ -256,45 +270,105 @@ export const DiscordContextProvider = ({
       imageFile: File,
       userIds: string[]
     ) => {
-      // Subir la imagen y obtener URL pública
-      const { data, error } = await supabase.storage
-        .from("servers")
-        .upload(`${name}.jpg`, imageFile, {
-          cacheControl: "3600",
-          upsert: true,
-        });
-
-      if (error) {
-        console.error("Image upload failed", error);
-        return;
-      }
-
-      const imageUrl = supabase.storage
-        .from("servers")
-        .getPublicUrl(`${name}.jpg`).data.publicUrl;
-
-      const messagingChannel = client.channel("messaging", uuid(), {
-        name: "Welcome",
-        members: userIds,
-        data: {
-          image: imageUrl,
-          server: name,
-          category: "Text Channels",
-        },
-      });
+      console.log('Starting server creation...');
+      console.log('Server name:', name);
+      console.log('Image file:', imageFile);
+      console.log('User IDs:', userIds);
 
       try {
-        await messagingChannel.create();
+        // Subir la imagen a Supabase
+        let imageUrl = '';
+        if (imageFile && imageFile.size > 0) {
+          console.log('Uploading image...');
+          const fileName = `${uuid()}.jpg`;
+          console.log('Generated filename:', fileName);
+          
+          const { error: uploadError } = await supabase.storage
+            .from('servers')
+            .upload(fileName, imageFile, {
+              cacheControl: '3600',
+              upsert: true,
+            });
 
-        const server: DiscordServer = { name, image: imageUrl };
+          if (uploadError) {
+            console.error('Error uploading image:', uploadError);
+            throw uploadError;
+          }
+          console.log('Image uploaded successfully');
 
-        await createCall(videoClient, server, "General Voice Channel", userIds);
-        changeServer(server, client);
-      } catch (err) {
-        console.error(err);
+          // Obtener la URL pública
+          const { data: { publicUrl } } = supabase.storage
+            .from('servers')
+            .getPublicUrl(fileName);
+          
+          imageUrl = publicUrl;
+          console.log('Image public URL:', imageUrl);
+        } else {
+          console.log('No image provided or empty file, using default');
+        }
+
+        // Incluir al usuario actual en los miembros y eliminar duplicados
+        const allMembers = Array.from(new Set([client.userID as string, ...userIds]));
+        console.log('All members (deduplicated):', allMembers);
+
+        // Crear el canal general del servidor
+        console.log('Creating general channel...');
+        const channel = client.channel('messaging', {
+          name: 'general',
+          data: {
+            name: 'general',
+            category: 'Text Channels',
+            server: name,
+            image: imageUrl,
+          },
+          members: allMembers,
+        });
+
+        console.log('Saving channel...');
+        await channel.create();
+        await channel.addMembers(allMembers);
+        console.log('Channel created successfully');
+
+        // Crear el servidor con los miembros
+        const newServer: DiscordServer = {
+          name,
+          image: imageUrl,
+          members: allMembers,
+        };
+        console.log('New server object:', newServer);
+
+        // Actualizar el estado con el nuevo servidor y sus miembros
+        console.log('Updating state...');
+        setMyState(prev => ({
+          ...prev,
+          server: newServer,
+          serverMembers: allMembers,
+          channelsByCategories: new Map([
+            ['Text Channels', [channel as unknown as Channel<DefaultStreamChatGenerics>]]
+          ])
+        }));
+        console.log('State updated');
+
+        // Crear un canal de voz por defecto
+        console.log('Creating voice channel...');
+        await createCall(videoClient, newServer, 'General Voice', userIds);
+        console.log('Voice channel created');
+        
+        console.log('Server creation completed successfully');
+        return newServer;
+      } catch (error) {
+        console.error('Error in createServer:', error);
+        if (error instanceof Error) {
+          console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+          });
+        }
+        throw error;
       }
     },
-    [changeServer, createCall]
+    [createCall]
   );
 
   const createChannel = useCallback(
@@ -312,7 +386,7 @@ export const DiscordContextProvider = ({
         data: {
           server: myState.server.name,
           category,
-          image: myState.server.image,
+          image: myState.server.image || '',
         },
       });
 
@@ -334,6 +408,7 @@ export const DiscordContextProvider = ({
     server: myState.server,
     callId: myState.callId,
     channelsByCategories: myState.channelsByCategories,
+    serverMembers: myState.serverMembers,
     changeServer,
     createServer,
     createDirectMessage,
