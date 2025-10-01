@@ -1,0 +1,10 @@
+.online-icon::after {
+  @apply block absolute h-4 w-4 bg-green-600 bottom-0 right-0 rounded-full border-2 border-gray-200;
+  content: "";
+}
+
+.dark .custom-thin-border-right {
+  border-left: 0.5px solid var(--border-color);
+  border-right: 0.5px solid var(--border-color);
+  border-top: 0.5px solid var(--border-color);
+}
