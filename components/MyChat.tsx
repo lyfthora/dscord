@@ -29,8 +29,8 @@ import React, {
   useLayoutEffect,
   useCallback,
 } from "react";
-
 import { useTheme } from "next-themes";
+import UserList from "./UserList/UserList";
 
 const SERVER_LIST_WIDTH = 84; // Estimated width of the ServerList component in pixels
 
@@ -54,10 +54,11 @@ export default function MyChat({
     user,
     tokenOrProvider: token,
   });
-  const { callId } = useDiscordContext();
+  const { callId, server } = useDiscordContext();
 
   // --- Resizing Logic --- //
   const [sidebarWidth, setSidebarWidth] = useState(288);
+  const [userListWidth, setUserListWidth] = useState(240);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
   const [bottomBarNode, setBottomBarNode] = useState<HTMLDivElement | null>(
     null
@@ -105,6 +106,21 @@ export default function MyChat({
     [bottomBarNode] // Add dependency here
   );
 
+  const handleUserListMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    document.addEventListener("mousemove", handleUserListMouseMove);
+    document.addEventListener("mouseup", handleUserListMouseUp);
+  };
+
+  const handleUserListMouseMove = (e: MouseEvent) => {
+    setUserListWidth(window.innerWidth - e.clientX);
+  };
+
+  const handleUserListMouseUp = () => {
+    document.removeEventListener("mousemove", handleUserListMouseMove);
+    document.removeEventListener("mouseup", handleUserListMouseUp);
+  };
+
   const isCollapsed = sidebarWidth <= 248;
 
   useLayoutEffect(() => {
@@ -143,7 +159,7 @@ export default function MyChat({
           <div className="p-1 text-center text-sm font-bold bg-black text-white">
             Discord
           </div>
-          <section className="flex flex-grow layout bg-white dark:bg-gray-800 gap-y-4 relative">
+          <section className="flex flex-grow bg-white dark:bg-gray-800 relative">
             <ServerList />
             <div ref={sidebarRef} style={{ width: sidebarWidth }}>
               <ChannelList
@@ -156,22 +172,25 @@ export default function MyChat({
                 sendChannelsToList={true}
               />
             </div>
-            {callId && <MyCall callId={callId} />}
-            {!callId && (
-              <Channel
-                Message={CustomMessage}
-                Input={MessageComposer}
-                DateSeparator={CustomDateSeparator}
-                reactionOptions={customReactionOptions}
-                HeaderComponent={CustomChannelHeader}
-              >
-                <Window>
-                  <MessageList />
-                  <MessageInput />
-                </Window>
-                <Thread />
-              </Channel>
-            )}
+            <div className="flex-grow">
+              {callId && <MyCall callId={callId} />}
+              {!callId && (
+                <Channel
+                  Message={CustomMessage}
+                  Input={MessageComposer}
+                  DateSeparator={CustomDateSeparator}
+                  reactionOptions={customReactionOptions}
+                  HeaderComponent={CustomChannelHeader}
+                >
+                  <Window>
+                    <MessageList />
+                    <MessageInput />
+                  </Window>
+                  <Thread />
+                </Channel>
+              )}
+            </div>
+            {server && <UserList width={userListWidth} handleMouseDown={handleUserListMouseDown} />}
             <ChannelListBottomBar
               ref={setBottomBarNode} // Use the callback ref here
               isCollapsed={isCollapsed}
