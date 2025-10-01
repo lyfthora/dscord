@@ -2,7 +2,7 @@
 
 import { DiscordServer } from "@/app/page";
 import { supabase } from "@/lib/supabase";
-import { MemberRequest, StreamVideoClient } from "@stream-io/video-client";
+import { Call, MemberRequest, StreamVideoClient } from "@stream-io/video-client";
 import {
   createContext,
   useCallback,
@@ -24,11 +24,17 @@ type ChannelData = {
 type DiscordState = {
   server?: DiscordServer;
   callId: string | undefined;
+  calls: Call[];
   channelsByCategories: Map<string, Array<Channel<DefaultStreamChatGenerics>>>;
   serverMembers: string[];
-  changeServer: (server: DiscordServer | undefined, client: StreamChat) => void;
+  changeServer: (
+    server: DiscordServer | undefined,
+    client: StreamChat,
+    videoClient: StreamVideoClient
+  ) => void;
   createDirectMessage: (
     client: StreamChat,
+    videoClient: StreamVideoClient,
     otherUserId: string
   ) => Promise<Channel>;
   createServer: (
@@ -40,6 +46,7 @@ type DiscordState = {
   ) => Promise<DiscordServer>;
   createChannel: (
     client: StreamChat,
+    videoClient: StreamVideoClient,
     name: string,
     category: string,
     userIds: string[]
@@ -56,6 +63,7 @@ type DiscordState = {
 const initialValue: DiscordState = {
   server: undefined,
   callId: undefined,
+  calls: [],
   channelsByCategories: new Map(),
   serverMembers: [],
   changeServer: () => {},
@@ -108,7 +116,11 @@ export const DiscordContextProvider = ({
   };
 
   const changeServer = useCallback(
-    async (server: DiscordServer | undefined, client: StreamChat) => {
+    async (
+      server: DiscordServer | undefined,
+      client: StreamChat,
+      videoClient: StreamVideoClient
+    ) => {
       const filters: ChannelFilters = {
         type: "messaging",
         members: { $in: [client.userID as string] },
@@ -162,14 +174,23 @@ export const DiscordContextProvider = ({
         const updatedServer: DiscordServer = {
           ...server,
           image: image,
-          members: members.length > 0 ? members : server.members || []
+          members: members.length > 0 ? members : server.members || [],
         };
+
+        const callsRequest = await videoClient.queryCalls({
+          filter_conditions: {
+            "custom.serverName": server.name,
+          },
+          sort: [{ field: "created_at", direction: 1 }],
+          watch: true,
+        });
 
         setMyState((prev) => ({
           ...prev,
           server: updatedServer,
           channelsByCategories,
-          serverMembers: members
+          serverMembers: members,
+          calls: callsRequest.calls,
         }));
       } else {
         // Si no hay servidor, borramos localStorage también
@@ -202,6 +223,7 @@ export const DiscordContextProvider = ({
           server: undefined,
           channelsByCategories,
           serverMembers: [],
+          calls: [],
         }));
       }
     },
@@ -209,7 +231,11 @@ export const DiscordContextProvider = ({
   );
 
   const createDirectMessage = useCallback(
-    async (client: StreamChat, otherUserId: string) => {
+    async (
+      client: StreamChat,
+      videoClient: StreamVideoClient,
+      otherUserId: string
+    ) => {
       const userIds = [client.userID, otherUserId]
         .filter((id): id is string => !!id)
         .sort();
@@ -224,7 +250,7 @@ export const DiscordContextProvider = ({
       });
 
       await channel.create();
-      await changeServer(undefined, client);
+      await changeServer(undefined, client, videoClient);
       return channel;
     },
     [changeServer]
@@ -374,6 +400,7 @@ export const DiscordContextProvider = ({
   const createChannel = useCallback(
     async (
       client: StreamChat,
+      videoClient: StreamVideoClient,
       name: string,
       category: string,
       userIds: string[]
@@ -392,7 +419,7 @@ export const DiscordContextProvider = ({
 
       try {
         await channel.create();
-        await changeServer(myState.server, client);
+        await changeServer(myState.server, client, videoClient);
       } catch (err) {
         console.error(err);
       }
@@ -407,6 +434,7 @@ export const DiscordContextProvider = ({
   const store: DiscordState = {
     server: myState.server,
     callId: myState.callId,
+    calls: myState.calls,
     channelsByCategories: myState.channelsByCategories,
     serverMembers: myState.serverMembers,
     changeServer,
