@@ -298,18 +298,21 @@ export default function CreateChannelForm(): JSX.Element {
   function createClicked() {
     if (isDM) {
       const selectedUser = users.find((user) => user.name === dmUserId);
-      if (selectedUser) {
-        createDirectMessage(client, selectedUser.id);
+      if (selectedUser && videoClient) {
+        createDirectMessage(client, videoClient, selectedUser.id);
       }
     } else {
       switch (formData.channelType) {
         case "text":
-          createChannel(
-            client,
-            formData.channelName,
-            formData.category,
-            formData.users.map((user) => user.id)
-          );
+          if (videoClient) {
+            createChannel(
+              client,
+              videoClient,
+              formData.channelName,
+              formData.category,
+              formData.users.map((user) => user.id)
+            );
+          }
           break;
         case "voice":
           if (videoClient && server) {
