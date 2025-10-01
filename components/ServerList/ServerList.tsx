@@ -6,9 +6,11 @@ import { useDiscordContext } from "@/contexts/DiscordContext";
 import CreateServerForm from "./CreateServerForm";
 import Link from "next/link";
 import { Channel } from "stream-chat";
+import { useStreamVideoClient } from "@stream-io/video-react-sdk";
 
 const ServerList = () => {
   const { client } = useChatContext();
+  const videoClient = useStreamVideoClient();
   const { server: activeServer, changeServer } = useDiscordContext();
   const [serverList, setServerList] = useState<DiscordServer[]>([]);
 
@@ -18,6 +20,7 @@ const ServerList = () => {
   }
 
   const loadServerList = useCallback(async (): Promise<void> => {
+    if (!videoClient) return;
     const channels = await client.queryChannels({
       type: "messaging",
       members: { $in: [client.userID as string] },
@@ -52,8 +55,8 @@ const ServerList = () => {
     
     const serverArray = Array.from(serverMap.values());
     setServerList(serverArray);
-    changeServer(undefined, client);
-  }, [client, changeServer]);
+    changeServer(undefined, client, videoClient);
+  }, [client, changeServer, videoClient]);
 
   useEffect(() => {
     loadServerList();
@@ -65,7 +68,10 @@ const ServerList = () => {
         className={`block p-3 aspect-square sidebar-icon partial-bottom-border-server-list ${
           activeServer === undefined ? "selected-icon" : ""
         }`}
-        onClick={() => changeServer(undefined, client)}
+        onClick={() => {
+          if (!videoClient) return;
+          changeServer(undefined, client, videoClient);
+        }}
       >
         <div className="rounded-icon discord-icon"></div>
       </button>
@@ -78,7 +84,8 @@ const ServerList = () => {
                 server === activeServer ? "selected-icon" : ""
               }`}
               onClick={() => {
-                changeServer(server, client);
+                if (!videoClient) return;
+                changeServer(server, client, videoClient);
               }}
             >
               {server.image && checkIfUrl(server.image) ? (
