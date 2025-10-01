@@ -1,64 +1,74 @@
-# Discord
+# Discord Clone
 
-Un clon de Discord construido con Next.js, Stream Chat y Clerk para autenticación. Ahora con soporte para almacenamiento de imágenes usando Supabase.
+This project is a feature-rich clone of Discord built with a modern tech stack, including Next.js, TypeScript, and Tailwind CSS. It leverages third-party services like Clerk for authentication, Stream for real-time chat and video, and Supabase for data storage.
 
-## Características
+## Features
 
-- Autenticación de usuarios con Clerk
-- Chat en tiempo real con Stream Chat
-- Almacenamiento de imágenes de avatar con Supabase
-- Interfaz de usuario moderna y responsive
+- **Complete Authentication**: Secure user registration and login handled by Clerk.
+- **Server Management**: Create and switch between different servers (guilds).
+- **Channel Organization**: Create and manage text and voice/video channels within servers.
+- **Real-Time Chat**: Instant messaging in channels, powered by Stream Chat. Includes custom message components, date separators, and emoji reactions.
+- **Video and Voice Calls**: High-quality, real-time video and voice communication within channels, powered by Stream's Video SDK.
+- **User Profiles**: Users have profiles with customizable usernames and avatars. Profile changes are synced across the application.
+- **File Uploads**: Avatar images are uploaded to and served from Supabase Storage.
+- **Responsive UI**: A modern, responsive interface built with Tailwind CSS, featuring resizable sidebars for a customizable user experience.
+- **Theming**: Supports both Light and Dark modes.
 
-## Tecnologías utilizadas
+## Technologies Used
 
-- [Next.js](https://nextjs.org/)
-- [React](https://reactjs.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Clerk](https://clerk.dev/) para autenticación
-- [Stream Chat](https://getstream.io/chat/) para chat en tiempo real
-- [Supabase](https://supabase.com/) para almacenamiento de imágenes
+- **Framework**: [Next.js](https://nextjs.org/) (App Router)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Authentication**: [Clerk](https://clerk.dev/)
+- **Real-Time Chat**: [Stream Chat](https://getstream.io/chat/)
+- **Video & Voice**: [Stream Video SDK](https://getstream.io/video/)
+- **Database & Storage**: [Supabase](https://supabase.com/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **UI Library**: [React](https://reactjs.org/)
 
-## Configuración
+## Getting Started
 
-### Requisitos previos
+### Prerequisites
 
-- Node.js (versión 14 o superior)
-- npm o yarn
-- Cuenta en Clerk
-- Cuenta en Stream Chat
-- Cuenta en Supabase
+- Node.js (v18 or higher recommended)
+- A [Clerk](https://clerk.dev/) account
+- A [Stream](https://getstream.io/) account
+- A [Supabase](https://supabase.com/) project
 
-### Instalación
+### Installation
 
-1. Clona el repositorio:
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-username/discord-clone.git
+    cd discord-clone
+    ```
 
-   ```bash
-   git clone https://github.com/tu-usuario/discord-clone.git
-   cd discord-clone
-   ```
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-2. Instala las dependencias:
+3.  **Set up environment variables:**
 
-   ```bash
-   npm install
-   # o
-   yarn install
-   ```
+    Create a `.env.local` file in the root of the project and add your credentials from Clerk, Stream, and Supabase. You can use `.env.local.example` as a template.
 
-3. Configura las variables de entorno:
+    ```
+    # Clerk
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+    CLERK_SECRET_KEY=
 
-   ```bash
-   cp .env.local.example .env.local
-   ```
+    # Stream
+    STREAM_API_KEY=
+    STREAM_CHAT_SECRET=
 
-   Edita el archivo `.env.local` y añade tus credenciales de Clerk, Stream Chat y Supabase.
+    # Supabase
+    NEXT_PUBLIC_SUPABASE_URL=
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=
+    ```
 
-### Ejecución
+### Running the Development Server
 
 ```bash
 npm run dev
-# o
-yarn dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000) en tu navegador para ver la aplicación.
+Open [http://localhost:3000](http://localhost:3000) in your browser to see the application in action.
