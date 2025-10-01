@@ -1,4 +1,4 @@
-# Discord 
+# Discord
 
 Un clon de Discord construido con Next.js, Stream Chat y Clerk para autenticación. Ahora con soporte para almacenamiento de imágenes usando Supabase.
 
@@ -53,10 +53,6 @@ Un clon de Discord construido con Next.js, Stream Chat y Clerk para autenticaci�
 
    Edita el archivo `.env.local` y añade tus credenciales de Clerk, Stream Chat y Supabase.
 
-4. Configura Supabase para el almacenamiento de imágenes:
-   - Sigue las instrucciones detalladas en [SUPABASE_SETUP.md](./SUPABASE_SETUP.md)
-   - **Importante**: Debes crear manualmente un bucket llamado "avatars" en Supabase y configurar las políticas de seguridad como se describe en la documentación.
-
 ### Ejecución
 
 ```bash
@@ -66,17 +62,3 @@ yarn dev
 ```
 
 Abre [http://localhost:3000](http://localhost:3000) en tu navegador para ver la aplicación.
-
-### Solución de problemas
-
-Si encuentras errores relacionados con Supabase, como "Failed to create bucket" o "new row violates row-level security policy", consulta la sección de solución de problemas en [SUPABASE_SETUP.md](./SUPABASE_SETUP.md).
-
-Problemas comunes:
-
-1. **Error de inicialización de Supabase**: Asegúrate de haber creado manualmente el bucket "avatars" en Supabase y configurado las políticas de seguridad correctamente.
-
-2. **Las imágenes no se cargan**: Verifica que el bucket sea público y que las políticas de seguridad estén configuradas correctamente.
-
-3. **Error de política de seguridad**: Configura manualmente las políticas de seguridad en Supabase como se describe en la documentación.
-
-
