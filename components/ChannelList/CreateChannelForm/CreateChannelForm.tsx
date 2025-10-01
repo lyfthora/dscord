@@ -26,8 +26,13 @@ export default function CreateChannelForm(): JSX.Element {
 
   const { client } = useChatContext();
   const videoClient = useStreamVideoClient();
-  const { server, createChannel, createCall, createDirectMessage, serverMembers } =
-    useDiscordContext();
+  const {
+    server,
+    createChannel,
+    createCall,
+    createDirectMessage,
+    serverMembers,
+  } = useDiscordContext();
   const initialState: FormState = {
     channelType: "text",
     channelName: "",
@@ -41,11 +46,11 @@ export default function CreateChannelForm(): JSX.Element {
   const loadUsers = useCallback(async () => {
     const response = await fetch("/api/users");
     const allUsers = (await response.json())?.data as UserObject[];
-    
+
     if (allUsers) {
       // Si estamos en un servidor, filtramos solo los miembros del servidor
       if (server) {
-        const filteredUsers = allUsers.filter(user => 
+        const filteredUsers = allUsers.filter((user) =>
           server.members.includes(user.id)
         );
         setUsers(filteredUsers);
@@ -110,7 +115,7 @@ export default function CreateChannelForm(): JSX.Element {
 
   return (
     <dialog
-      className="absolute z-10 space-y-2 rounded-xl bg-white dark:bg-gray-800"
+      className="absolute z-10 space-y-2 rounded-xl bg-white dark:bg-[var(--gray-normal)] custom-thin-border-channel-form "
       ref={dialogRef}
     >
       <div className="w-full flex items-center justify-between py-8 px-6">
@@ -211,7 +216,7 @@ export default function CreateChannelForm(): JSX.Element {
             >
               Channel Name
             </label>
-            <div className="flex items-center bg-gray-100 dark:bg-gray-700">
+            <div className="flex items-center  rounded-md bg-gray-100 dark:bg-gray-700">
               <span className="text-2xl p-2 text-gray-500 dark:text-gray-400">
                 #
               </span>
@@ -234,7 +239,7 @@ export default function CreateChannelForm(): JSX.Element {
                 >
                   Category
                 </label>
-                <div className="flex items-center bg-gray-100 dark:bg-gray-700">
+                <div className="flex items-center rounded-md bg-gray-100 dark:bg-gray-700">
                   <span className="text-2xl p-2 text-gray-500 dark:text-gray-400">
                     #
                   </span>
@@ -260,7 +265,7 @@ export default function CreateChannelForm(): JSX.Element {
           </>
         )}
       </form>
-      <div className="flex space-x-6 items-center justify-end p-6 bg-gray-200 dark:bg-gray-900">
+      <div className="flex space-x-6 items-center justify-end p-6 bg-gray-200 custom-thin-border-form dark:bg-[var(--gray-normal)]">
         <Link
           href={"/"}
           className="font-semibold text-gray-500 dark:text-gray-400"
