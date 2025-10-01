@@ -1,32 +1,12 @@
 import { useDiscordContext } from "@/contexts/DiscordContext";
-import { Call, useStreamVideoClient } from "@stream-io/video-react-sdk";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { ChevronRight, PlusIcon, Speaker } from "../Icons";
 import Link from "next/link";
 
 export default function CallList(): JSX.Element {
-  const { server, callId, setCall } = useDiscordContext();
-  const client = useStreamVideoClient();
+  const { calls, callId, setCall } = useDiscordContext();
 
   const [isOpen, setIsOpen] = useState<boolean>(true);
-  const [calls, setCalls] = useState<Call[]>([]);
-
-  const loadAudioChannels = useCallback(async () => {
-    const callsRequest = await client?.queryCalls({
-      filter_conditions: {
-        "custom.serverName": server?.name || "Test Server",
-      },
-      sort: [{ field: "created_at", direction: 1 }],
-      watch: true,
-    });
-    if (callsRequest?.calls) {
-      setCalls(callsRequest?.calls);
-    }
-  }, [client, server]);
-
-  useEffect(() => {
-    loadAudioChannels();
-  }, [loadAudioChannels]);
 
   return (
     <div className="w-full my-2">
@@ -61,7 +41,9 @@ export default function CallList(): JSX.Element {
               <button
                 key={call.id}
                 className={`w-full flex items-center my-1 px-2 py-1 rounded-md group ${
-                  isActive ? "bg-hover-gray dark:bg-gray-700" : "hover:bg-light-gray dark:hover:bg-gray-700"
+                  isActive
+                    ? "bg-hover-gray dark:bg-gray-700"
+                    : "hover:bg-light-gray dark:hover:bg-gray-700"
                 }`}
                 onClick={() => {
                   setCall(call.id);
